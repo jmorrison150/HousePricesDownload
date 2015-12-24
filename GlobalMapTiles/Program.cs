@@ -149,9 +149,9 @@ namespace GlobalMapTiles {
 
 
 			////save bitmap
-			string pathString = "./data/"+tileXYZ[2]+"/"+tileXYZ[0]+"/";
+			string pathString = "./images/"+tileXYZ[2]+"/"+tileXYZ[0]+"/";
 			System.IO.Directory.CreateDirectory(pathString);
-			bitmap.Save("./data/"+tileXYZ[2]+"/"+tileXYZ[0]+"/"+tileXYZ[1]+".png");
+			bitmap.Save("./images/"+tileXYZ[2]+"/"+tileXYZ[0]+"/"+tileXYZ[1]+".png");
 
 
 			return count;

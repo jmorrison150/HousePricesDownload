@@ -12,11 +12,11 @@ class Program {
 
 	public static async Task insert(IMongoCollection<BsonDocument> rawData, IMongoCollection<BsonDocument> cleanData) {
 
-		BsonDocument filter = new BsonDocument();
+		BsonDocument all = new BsonDocument();
 		long count = 0;
 
 
-		using(var cursor = await rawData.FindAsync(filter)) {
+		using(var cursor = await rawData.FindAsync(all)) {
 			while(await cursor.MoveNextAsync()) {
 				var batch = cursor.Current;
 				foreach(var doc in batch) {
@@ -28,6 +28,8 @@ class Program {
 
 					BsonDocument[] docs = new BsonDocument[a.Count];
 					for(int i = 0; i < a.Count; i++) {
+						
+	
 						//test for price>1
 						//db.prop.find({price:{$not:{$gt:1}}}).count()
 						//db.prop.remove({price:{$not:{$gt:1}}})
@@ -43,28 +45,42 @@ class Program {
 						double lat = (double) a[i][1].AsInt32 /1000000.0;
 						double lng = (double) a[i][2].AsInt32 /1000000.0;
 						int price = (int) a[i][7][0].AsInt32;
+						
 
 
 
-						BsonDocument document = new BsonDocument {
-							{"_id", a[i][0]},
-							{"lat", lat},
-							{"lng", lng},
-							{"price",price},
-							{"bed", a[i][7][1]},
-							{"bath", a[i][7][2]},
-							{"sf", a[i][7][3]},
-							{"type",a[i][7][4]},
-							{"img",a[i][7][5]}
-							};
+						// BsonDocument document = new BsonDocument {
+						// 	{"_id", a[i][0]},
+						// 	{"lat", lat},
+						// 	{"lng", lng},
+						// 	{"price",price},
+						// 	{"bed", a[i][7][1]},
+						// 	{"bath", a[i][7][2]},
+						// 	{"sf", a[i][7][3]},
+						// 	{"type",a[i][7][4]},
+						// 	{"img",a[i][7][5]}
+						// 	};
 						//Console.WriteLine(document);
 						//await cleanData.InsertOneAsync(document);
 						//cleanData.BulkWriteAsync(docs);
-						
-ReplaceOneResult result = await cleanData.ReplaceOneAsync(
-    filter: new BsonDocument("_id", a[i][0]),
-    options: new UpdateOptions { IsUpsert = true },
-    replacement: document);
+											
+						var filter = Builders<BsonDocument>.Filter.Eq("_id", a[i][0]);
+						var update = Builders<BsonDocument>.Update
+							.Set("lat", lat)
+							.Set("lng", lng)
+							.Set("price",price)
+							.Set("bed", a[i][7][1])
+							.Set("bath", a[i][7][2])
+							.Set("sf", a[i][7][3])
+							.Set("type",a[i][7][4])
+							.Set("img",a[i][7][5]);
+						var options = new UpdateOptions { IsUpsert = true};
+						var result = await cleanData.UpdateOneAsync(filter, update, options);
+
+						// ReplaceOneResult result = await cleanData.ReplaceOneAsync(
+						// 	filter: new BsonDocument("_id", a[i][0]),
+						// 	options: new UpdateOptions { IsUpsert = true },
+						// 	replacement: document);
 
 						count++;
 
@@ -196,18 +212,18 @@ public static async Task near(IMongoCollection<BsonDocument> collection) {
 			// if(count==0) { return count; }
 			long count = 0;
 		
-		var filter = Builders<BsonDocument>.Filter.Exists("nearMin",false); 
+		var filterNear = Builders<BsonDocument>.Filter.Exists("nearMin",false); 
 		//filter = new BsonDocument();
 		//count = collection.Find(filter).CountAsync().Result;
 		//Console.WriteLine(count.ToString());
-		using(var cursor = await collection.FindAsync(filter)) {
+		using(var cursor = await collection.FindAsync(filterNear)) {
 				while(await cursor.MoveNextAsync()) {
 					var batch = cursor.Current;
 					foreach(var doc in batch) {
 						
 						count++;
 
-						//if(count%5!=0){continue;}
+						//if(count%100!=0){continue;}
 						
 						try{
 						//Draw.near(doc["price"].AsInt32, doc["lat"].AsDouble, doc["lng"].AsDouble, zoom, bitmap, collection);
@@ -237,31 +253,42 @@ public static async Task near(IMongoCollection<BsonDocument> collection) {
 						maxPrice = Math.Max(maxPrice,minPrice+20);
 															
 						
-						//if(doc["price"].BsonType!=BsonType.Int32) { continue; }
-						BsonDocument document = new BsonDocument {
-							{"_id", doc["_id"]},
-							{"lat", doc["lat"]},
-							{"lng", doc["lng"]},
-							{"price",doc["price"]},
-							{"bed", doc["bed"]},
-							{"bath", doc["bath"]},
-							{"sf", doc["sf"]},
-							{"type",doc["type"]},
-							{"img",doc["img"]},
-							{"nearMin",minPrice},
-							{"nearMax",maxPrice}
+						// //if(doc["price"].BsonType!=BsonType.Int32) { continue; }
+						// BsonDocument document = new BsonDocument {
+						// 	{"_id", doc["_id"]},
+						// 	{"lat", doc["lat"]},
+						// 	{"lng", doc["lng"]},
+						// 	{"price",doc["price"]},
+						// 	{"bed", doc["bed"]},
+						// 	{"bath", doc["bath"]},
+						// 	{"sf", doc["sf"]},
+						// 	{"type",doc["type"]},
+						// 	{"img",doc["img"]},
+						// 	{"nearMin",minPrice},
+						// 	{"nearMax",maxPrice}
 							
 
-							};
-						ReplaceOneResult result = await collection.ReplaceOneAsync(
-							filter: new BsonDocument("_id", doc["_id"]),
-							options: new UpdateOptions { IsUpsert = true },
-							replacement: document);
+						// 	};
+						// ReplaceOneResult result = await collection.ReplaceOneAsync(
+						// 	filter: new BsonDocument("_id", doc["_id"]),
+						// 	options: new UpdateOptions { IsUpsert = true },
+						// 	replacement: document);
+						
+						var filter = Builders<BsonDocument>.Filter.Eq("_id", doc["_id"]);
+						var update = Builders<BsonDocument>.Update
+							.Set("nearMin",minPrice)
+							.Set("nearMax",maxPrice);
+						var options = new UpdateOptions { IsUpsert = false};
+						var result = await collection.UpdateOneAsync(filter, update, options);
+
+						
+						
 						}
 						catch{
 							
 							Console.Write(count.ToString()+",");
 						}
+						
 						
 					}
 					Console.WriteLine(count);
@@ -281,11 +308,11 @@ public static async Task near(IMongoCollection<BsonDocument> collection) {
 
 
 
-		//Task tsk = insert(collection1, collection);
-		//tsk.Wait();
+		Task tsk = insert(collection1, collection);
+		tsk.Wait();
 		
-		Task calculateNear = near(collection);
-		calculateNear.Wait();
+		// Task calculateNear = near(collection);
+		// calculateNear.Wait();
 
 		Console.WriteLine("Press Enter to Continue...");
 		Console.ReadKey(false);
