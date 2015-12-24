@@ -1,0 +1,87 @@
+
+body {
+    font: 10px sans-serif;
+    color: #FFF;
+    background-color:#000;
+        margin: 0px;
+    padding: 0px;
+}
+
+.map {
+    width: 70%;
+    height: 98%;
+    min-width: 600px;
+    min-height: 300px;
+    position: absolute;
+    margin: 0px;
+    padding: 0px;
+    z-index: 0;
+}
+
+.streetView {
+    height: 50%;
+    min-width: 300px;
+    min-height: 300px;
+}
+
+.graph {
+    height: 30%;
+    min-width: 300px;
+    min-height: 300px;
+}
+
+.detail {
+    width: 28%;
+    min-width: 300px;
+    margin: 0px;
+    padding-top: 20px;
+    float: right;
+    z-index: 3;
+    clear: both;
+}
+
+
+.bar rect {
+    fill: #525252;
+    shape-rendering: crispEdges;
+}
+
+.bar text {
+    text-anchor: middle;
+    fill: #fff;
+}
+
+.axis path, .axis line {
+    fill: none;
+    stroke: #FFF;
+    shape-rendering: crispEdges;
+}
+
+text {
+    fill: #FFF;
+}
+
+
+img {
+    position: absolute;
+}
+
+.layout {
+    visibility: hidden;
+}
+
+#intro {
+    visibility: hidden;
+    position:absolute;
+    top:550px;
+}
+p {
+font-size:1em;
+}
+a:link, a:visited {
+color:cyan;
+}
+.back {
+float:right;
+clear:both;
+}
