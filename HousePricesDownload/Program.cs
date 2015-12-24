@@ -225,17 +225,6 @@ namespace HousePricesDownload {
                             img = (string) datas.map.nearbyProperties[i][7][5];
                         }
                     } catch {
-
-
-                        //Console.WriteLine("id="+id);
-                        //Console.WriteLine("price="+price);
-                        //Console.WriteLine("type="+type);
-                        //Console.WriteLine("bed="+bed);}
-                        //Console.WriteLine("bath="+bath);}
-                        //Console.WriteLine("sf="+sf);}
-                        //Console.WriteLine("isVacant="+isVacantLand);
-                        //Console.WriteLine("img="+img);
-                        //Console.WriteLine("---");
                     }
 
                 } catch {
@@ -309,74 +298,6 @@ namespace HousePricesDownload {
 
             //Console.WriteLine(request);
             return request;
-        }
-        void writeDB() {
-
-
-
-            //MongoDB.Bson.BsonDocument doc;
-            //doc  = BsonDocument.Parse(json);
-
-
-            //var collection0 = test.GetCollection<BsonDocument>("prop");
-            //var filter = new BsonDocument();
-            //var count = 0;
-
-            //                var address = document["lat"].AsDouble;
-            //                Console.WriteLine(address.ToString());
-
-            //// build some test data
-            //BsonArray dataFields = new BsonArray { new BsonDocument { 
-            //    { "ID" , ObjectId.GenerateNewId()}, { "NAME", "ID"}, {"TYPE", "Text"} } };
-            //BsonDocument nested = new BsonDocument {
-            //    { "name", "John Doe" },
-            //    { "fields", dataFields },
-            //    { "address", new BsonDocument {
-            //            { "street", "123 Main St." },
-            //            { "city", "Madison" },
-            //            { "state", "WI" },
-            //            { "zip", 53711}
-            //        }
-            //    }
-            //};
-            //// grab the address from the document,
-            //// subdocs as a BsonDocument
-            //var address = nested["address"].AsBsonDocument;
-            //Console.WriteLine(address["city"].AsString); 
-            //// or, jump straight to the value ...
-            //Console.WriteLine(nested["address"]["city"].AsString);
-            //// loop through the fields array
-            //var allFields = nested["fields"].AsBsonArray ;
-            //foreach (var fields in allFields)
-            //{
-            //    // grab a few of the fields:
-            //    Console.WriteLine("Name: {0}, Type: {1}", 
-            //        fields["NAME"].AsString, fields["TYPE"].AsString);
-            //}
-
-            //Console.WriteLine(datas.map.nearbyProperties[i]);
-            //Console.WriteLine(datas.map.nearbyProperties[i][1]);
-            //Console.WriteLine(datas.map.nearbyProperties[i][2]);
-            //Console.WriteLine(datas.map.nearbyProperties[i][7][0]);
-            //Console.WriteLine(datas.map.nearbyProperties[i][7][1]);
-            //Console.WriteLine(datas.map.nearbyProperties[i][7][2]);
-            //Console.WriteLine(datas.map.nearbyProperties[i][7][3]);
-        }
-        void writeFile() {
-
-            // WriteAllLines creates a file, writes a collection of strings to the file, and then closes the file.
-            //System.IO.File.WriteAllLines(@"C:\Users\JMorrison\Desktop\apts-" + today + ".txt", data2);
-
-
-
-            // Example #4: Append new text to an existing file. 
-            // The using statement automatically closes the stream and calls  
-            // IDisposable.Dispose on the stream object. 
-            //using (System.IO.StreamWriter file = new System.IO.StreamWriter(fileName, true)) {
-            //    for (int i = 0; i < data2.Count; i++) {
-            //        file.WriteLine(data2[i]);
-            //    }
-            //}        
         }
         private void pause() {
             Console.WriteLine("Press Enter to Continue...");

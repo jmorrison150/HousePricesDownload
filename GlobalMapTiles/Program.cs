@@ -12,7 +12,6 @@ namespace GlobalMapTiles {
 		static void Main(string[] args) {
 			GlobalMapTiles.DrawMap drawMapInstance = new DrawMap();
 			drawMapInstance.initialize();
-
 		}
 	}
 
@@ -46,8 +45,6 @@ namespace GlobalMapTiles {
 			// tsk.Wait();
 			// tsk = queryToBitmap(dallas, collection);
 			// tsk.Wait();
-
-
 
 
 			DateTime endTime = DateTime.Now;
@@ -105,48 +102,9 @@ namespace GlobalMapTiles {
 						
 						//Draw.price(p , latitude, longitude, zoom, bitmap);
 						Draw.near(doc["price"].AsInt32,doc["nearMin"].AsInt32,doc["nearMax"].AsInt32, doc["lat"].AsDouble, doc["lng"].AsDouble, zoom, bitmap);
-						
-						
-						
 					}
 				}
 			}
-
-			//	for(int i = 0; i < 256; i++) {
-			//			double[] boundsIJ = new double[4];
-			//			boundsIJ[0] = Draw.map(i, 0, 256, bounds[0], bounds[1]);
-			//			boundsIJ[1] = Draw.map(i+1, 0, 256, bounds[0], bounds[1]);
-			//		for(int j = 0; j < 256; j++) {
-			//			boundsIJ[2] = Draw.map(j, 0, 256, bounds[2], bounds[3]);
-			//			boundsIJ[3] = Draw.map(j+1, 0, 256, bounds[2], bounds[3]);
-			//			var filterIJ = builder.Gt("lat", boundsIJ[0]) & builder.Lt("lat", boundsIJ[1]) & builder.Gt("lng", boundsIJ[2]) & builder.Lt("lng", boundsIJ[3]);
-
-			//			FindOptions options = new FindOptions();
-			//			options.BatchSize = 1;
-			//			var documents = await collection.Find(filter).ToListAsync();
-			//			foreach(BsonDocument doc in documents) {
-
-
-			//				//BsonDocument doc = collection.Find(filterIJ).Limit(1)
-			//				//Console.WriteLine(doc["price"].BsonType.ToString());
-			//				//Console.WriteLine(doc["price"].ToString());
-			//				if(doc["price"].BsonType!=BsonType.Int32) { continue; }
-			//				//Console.WriteLine(doc["price"].AsDouble.ToString());
-			//				//Console.WriteLine(((double)doc["price"]).ToString());
-			//				Draw.circle((double) doc["price"].AsInt32, (double) doc["lat"].AsDouble, (double) doc["lng"].AsDouble, zoom, bitmap);
-			//				//count++;
-
-
-
-			//	//draw each property
-
-
-
-			//	var list = await collection.Find(filter).Limit(3000000).ToListAsync();	
-			//foreach(var doc in list){
-			//	if(doc["price"].BsonType!=BsonType.Int32) { continue; }
-			//	Draw.price(doc["price"].AsInt32, doc["lat"].AsDouble, doc["lng"].AsDouble, zoom, bitmap);
-
 
 			////save bitmap
 			string pathString = "./images/"+tileXYZ[2]+"/"+tileXYZ[0]+"/";
