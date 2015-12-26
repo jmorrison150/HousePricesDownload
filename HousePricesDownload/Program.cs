@@ -21,9 +21,9 @@ namespace HousePricesDownload {
 		protected static IMongoClient client;
 		protected static IMongoDatabase test;
 		double sizeMax = 10.0;
-		double sizeMin = 0.01;
+		double sizeMin = 10.0;
 		double factor = 10;
-		//double[] factors = new double[] {10.0, 1.0, 0.1, 0.01};
+		//double[] factors = new double[4] {10.0, 1.0, 0.1, 0.01};
 
 
 
@@ -51,7 +51,7 @@ namespace HousePricesDownload {
 			//usa
 			latMin = 20.0;
 			latMax = 50.0;
-			lngMin = -110.0;
+			lngMin = -130.0;
 			lngMax = -60.0;
 
 			////dallas
@@ -59,6 +59,9 @@ namespace HousePricesDownload {
 			//lngMin = -97.610412;
 			//latMax = 33.125659;
 			//lngMax =  -96.410155;
+
+
+
 
 
 			for(double currentLng = lngMax; currentLng >=lngMin; currentLng -= sizeMax) {
@@ -75,48 +78,76 @@ namespace HousePricesDownload {
 		}
 		void run(double latMin, double lngMin, double size, IMongoCollection<BsonDocument> collection, IMongoCollection<BsonDocument> searchCollection) {
 
-			Console.WriteLine("("+lngMin+","+latMin+")");
+			Console.Write("("+lngMin+","+latMin+")");
 			int nearbyCount;
 			string json = "";
-			int page = 1;
-			dynamic data;
 
 			//test for previous search
 			var builder = Builders<BsonDocument>.Filter;
 			FilterDefinition<BsonDocument> filter = builder.Eq("lat", latMin) & builder.Eq("lng", lngMin) & builder.Eq("size", size);
-			Task<long> tsk = searchCollection.Find(filter).CountAsync();
-			tsk.Wait();
-			if(tsk.Result==0) {
+			Task<long> previousCount = searchCollection.Find(filter).CountAsync();
+			previousCount.Wait();
+			if(previousCount.Result==0) {
 
 				//new download
-				try {
-					json = getJSON(latMin, lngMin, size, page);
-					data = Newtonsoft.Json.JsonConvert.DeserializeObject(json);
-					insertRawJSON(json, collection);
-					nearbyCount = data.map.nearbyProperties.Count;
-					Console.WriteLine(nearbyCount+ data.list.page + " of "+ data.list.numPages);
-					insertSearch(latMin, lngMin, size, nearbyCount, searchCollection);
-				} catch { Console.Write("0"); return; }
-
-
+				nearbyCount = download(json, latMin, lngMin, size, collection, searchCollection);
+				insertSearch(latMin, lngMin, size, nearbyCount, searchCollection);
 
 				//use old download
 			} else {
-				BsonDocument previousSearch = searchCollection.Find(filter).FirstAsync().ToBsonDocument();
+				Task<BsonDocument> task = searchCollection.Find(filter).FirstAsync();
+				BsonDocument previousSearch = task.Result;
 				nearbyCount = previousSearch["count"].AsInt32;
+				Console.WriteLine(" "+nearbyCount.ToString());
 			}
 
 
 			//recursive at smaller scale
-			if(( nearbyCount>800 ) && ( size > sizeMin )) {
+			if(( nearbyCount>500 ) && ( size > sizeMin )) {
 				double size01 = size / factor;
 				for(int i = 0; i < factor; i++) {
 					for(int j = 0; j < factor; j++) {
 						run(( latMin+( size01*i ) ), ( lngMin+( size01*j ) ), size01, collection, searchCollection);
 					}
 				}
+			}
+
+
+		}
+		int download(string json, double latMin, double lngMin, double size, IMongoCollection<BsonDocument> collection, IMongoCollection<BsonDocument> searchCollection) {
+
+			dynamic data;
+			int nearbyCount;
+			//new download
+			try {
+				json = getJSON(latMin, lngMin, size);
+
+				if(json[0]!='{') {
+					Console.Write(json);
+					Console.Write(" captcha");
+					
+					pause();
+					return -2;
+				}
+
+
+				data = Newtonsoft.Json.JsonConvert.DeserializeObject(json);
+				insertRawJSON(json, collection);
+				nearbyCount = (int) data.map.nearbyProperties.Count;
+				Console.WriteLine(nearbyCount.ToString() + data.list.page.ToString() + " of "+ data.list.numPages.ToString());
+
+				insertSearch(latMin, lngMin, size, nearbyCount, searchCollection);
+				return nearbyCount;
+			} catch {
+
+				insertSearch(latMin, lngMin, size, -1, searchCollection);
+				Console.Write(" error");
+				System.Threading.Thread.Sleep(10000);
+				return -1;
 
 			}
+
+
 
 		}
 		void insertRawJSON(string json, IMongoCollection<BsonDocument> collection) {
@@ -126,7 +157,6 @@ namespace HousePricesDownload {
 
 		}
 		void insertSearch(double lat, double lng, double size, int count, IMongoCollection<BsonDocument> searchCollection) {
-
 			BsonDocument document;
 			document = new BsonDocument {
                     
@@ -136,20 +166,17 @@ namespace HousePricesDownload {
                     {"count", count}
                     };
 
+			Console.Write(document["size"]+","+document["count"]);
 			searchCollection.InsertOneAsync(document);
 
-
-
-
-
-
 		}
-		private string getJSON(double lat, double lng, double size, int page) {
+		private string getJSON(double lat, double lng, double size) {
 
 			string latMin = string.Format("{0:0}", ( lat )*1000000.0);
 			string lngMin = string.Format("{0:0}", ( lng )*1000000.0);
 			string lngMax = string.Format("{0:0}", ( ( lng+( size ) )*1000000 ));
 			string latMax = string.Format("{0:0}", ( ( lat+( size ) )*1000000 ));
+			int page = 1;
 
 			//string jmorrisonco = "http://www.jmorrison.co";
 			string url = "http://www.zillow.com/search/GetResults.htm"
@@ -178,7 +205,7 @@ namespace HousePricesDownload {
                 + "&" + "zoom=19"
                 + "&" + "rect="
                 + lngMin
-                + "," +latMin
+                + "," + latMin
                 + "," + lngMax
                 + "," + latMax
                 + "&" + "p="

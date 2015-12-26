@@ -16,9 +16,7 @@ namespace GlobalMapTiles {
 	}
 
 
-
 	class DrawMap {
-
 		public void initialize() {
 
 			DateTime startTime = DateTime.Now;
@@ -80,7 +78,7 @@ namespace GlobalMapTiles {
 
 			double[] bounds = proj.tileLatLngBounds(tileXYZ[0], tileXYZ[1], tileXYZ[2]);
 			var builder = Builders<BsonDocument>.Filter;
-			var filter = builder.Exists("nearMin",true) & builder.Gt("lat", bounds[0]) & builder.Lt("lat", bounds[1]) & builder.Gt("lng", bounds[2]) & builder.Lt("lng", bounds[3]);
+			var filter = builder.Exists("nearMin", true) & builder.Gt("lat", bounds[0]) & builder.Lt("lat", bounds[1]) & builder.Gt("lng", bounds[2]) & builder.Lt("lng", bounds[3]);
 			long count = collection.Find(filter).CountAsync().Result;
 			Console.Write(count.ToString()+",");
 			if(count==0) { return count; }
@@ -89,19 +87,19 @@ namespace GlobalMapTiles {
 				while(await cursor.MoveNextAsync()) {
 					var batch = cursor.Current;
 					int current = 0;
-					
+
 					foreach(var doc in batch) {
 						current++;
 						//if(!(5000<current && current<10000 && current%3==0)){continue;}
-						
+
 						if(doc["price"].BsonType!=BsonType.Int32) { continue; }
-						
+
 						int p = (int) doc["price"].AsInt32;
 						double latitude =(double) doc["lat"].AsDouble;
-						double longitude =(double) doc["lng"].AsDouble;  
-						
+						double longitude =(double) doc["lng"].AsDouble;
+
 						//Draw.price(p , latitude, longitude, zoom, bitmap);
-						Draw.near(doc["price"].AsInt32,doc["nearMin"].AsInt32,doc["nearMax"].AsInt32, doc["lat"].AsDouble, doc["lng"].AsDouble, zoom, bitmap);
+						Draw.near(doc["price"].AsInt32, doc["nearMin"].AsInt32, doc["nearMax"].AsInt32, doc["lat"].AsDouble, doc["lng"].AsDouble, zoom, bitmap);
 					}
 				}
 			}
@@ -134,12 +132,10 @@ namespace GlobalMapTiles {
 
 
 	public class Draw {
-
 		public static int map(int value1, int min1, int max1, int min2, int max2) {
 			int value2 = min2 + ( value1 - min1 ) * ( max2 - min2 ) / ( max1 - min1 );
 			return value2;
 		}
-
 		public static double map(double value1, double min1, double max1, double min2, double max2) {
 			double value2 = min2 + ( value1 - min1 ) * ( max2 - min2 ) / ( max1 - min1 );
 			return value2;
@@ -148,9 +144,8 @@ namespace GlobalMapTiles {
 			int minPrice = 40000;
 			int maxPrice = 800000;
 
-			near(price,minPrice,maxPrice,lat,lng,zoom,bitmap);
+			near(price, minPrice, maxPrice, lat, lng, zoom, bitmap);
 		}
-		
 		public static void near(int price, int nearMin, int nearMax, double lat, double lng, int zoom, Bitmap bitmap) {
 
 			int minPrice = nearMin;
@@ -171,7 +166,7 @@ namespace GlobalMapTiles {
 				bitmap.SetPixel(pixel[0], pixel[1], color);
 			} else {
 
-				double size0 = zoom-6.0;
+				double size0 = zoom-5.0;
 				int size = (int) Math.Max(size0, 1);
 				int px = ( pixel[0]-(int) ( size*0.5 ) );
 				int py = ( pixel[1]-(int) ( size*0.5 ) );
