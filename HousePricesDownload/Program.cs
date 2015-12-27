@@ -60,6 +60,11 @@ namespace HousePricesDownload {
 			//latMax = 33.125659;
 			//lngMax =  -96.410155;
 
+			//debug
+			latMin = 40.0;
+			latMax = 40.0;
+			lngMin = -90.0;
+			lngMax = -90.0;
 
 
 
@@ -87,14 +92,17 @@ namespace HousePricesDownload {
 			FilterDefinition<BsonDocument> filter = builder.Eq("lat", latMin) & builder.Eq("lng", lngMin) & builder.Eq("size", size);
 			Task<long> previousCount = searchCollection.Find(filter).CountAsync();
 			previousCount.Wait();
+
+			download(json, latMin, lngMin, size, collection, searchCollection);
 			if(previousCount.Result==0) {
 
 				//new download
 				nearbyCount = download(json, latMin, lngMin, size, collection, searchCollection);
-				insertSearch(latMin, lngMin, size, nearbyCount, searchCollection);
+				
 
-				//use old download
+
 			} else {
+				//use old download
 				Task<BsonDocument> task = searchCollection.Find(filter).FirstAsync();
 				BsonDocument previousSearch = task.Result;
 				nearbyCount = previousSearch["count"].AsInt32;
@@ -118,33 +126,56 @@ namespace HousePricesDownload {
 
 			dynamic data;
 			int nearbyCount;
-			//new download
+			int numPages;
 			try {
 				json = getJSON(latMin, lngMin, size);
+			}catch{
 
+
+
+				//connection error
+				insertSearch(latMin, lngMin, size, -1, -1, searchCollection);
+				Console.Write(json);
+				Console.Write(" connection error");
+				System.Threading.Thread.Sleep(10000);
+				return -1;
+			}
+
+
+				//captcha
 				if(json[0]!='{') {
 					Console.Write(json);
 					Console.Write(" captcha");
+
 					
+					System.IO.File.WriteAllText(@"C:\data\captcha.html", json);
+					System.Diagnostics.Process.Start(@"C:\data\captcha.html");
+
+
+
+
+					insertSearch(latMin, lngMin, size, -2, -2, searchCollection);
 					pause();
 					return -2;
 				}
 
-
+			try{
+				//new download
 				data = Newtonsoft.Json.JsonConvert.DeserializeObject(json);
 				insertRawJSON(json, collection);
 				nearbyCount = (int) data.map.nearbyProperties.Count;
-				Console.WriteLine(nearbyCount.ToString() + data.list.page.ToString() + " of "+ data.list.numPages.ToString());
-
-				insertSearch(latMin, lngMin, size, nearbyCount, searchCollection);
+				numPages = data.lists.numPages;
+				insertSearch(latMin, lngMin, size, nearbyCount,numPages, searchCollection);
 				return nearbyCount;
-			} catch {
+			
 
-				insertSearch(latMin, lngMin, size, -1, searchCollection);
+				//error
+			} catch {
+				insertSearch(latMin, lngMin, size, -1,-1, searchCollection);
+				Console.Write(json);
 				Console.Write(" error");
 				System.Threading.Thread.Sleep(10000);
 				return -1;
-
 			}
 
 
@@ -156,14 +187,15 @@ namespace HousePricesDownload {
 			collection.InsertOneAsync(document);
 
 		}
-		void insertSearch(double lat, double lng, double size, int count, IMongoCollection<BsonDocument> searchCollection) {
+		void insertSearch(double lat, double lng, double size, int count,int numPages, IMongoCollection<BsonDocument> searchCollection) {
 			BsonDocument document;
 			document = new BsonDocument {
                     
                     {"lat", lat},
                     {"lng", lng},
                     {"size",size},
-                    {"count", count}
+                    {"count", count},
+										{"numPages",numPages}
                     };
 
 			Console.Write(document["size"]+","+document["count"]);
