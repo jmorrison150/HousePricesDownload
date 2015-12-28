@@ -20,8 +20,8 @@ namespace HousePricesDownload {
 	class MyClass {
 		protected static IMongoClient client;
 		protected static IMongoDatabase test;
-		double sizeMax = 10.0;
-		double sizeMin = 10.0;
+		double sizeMax = 1.0;
+		double sizeMin = 1.0;
 		double factor = 10;
 		//double[] factors = new double[4] {10.0, 1.0, 0.1, 0.01};
 
@@ -54,17 +54,17 @@ namespace HousePricesDownload {
 			lngMin = -130.0;
 			lngMax = -60.0;
 
-			////dallas
-			//latMin =  32.472300;
-			//lngMin = -97.610412;
-			//latMax = 33.125659;
-			//lngMax =  -96.410155;
+			// //dallas
+			// latMin =  32.4;
+			// lngMin = -97.6;
+			// latMax = 33.1;
+			// lngMax =  -96.4;
 
-			//debug
-			latMin = 40.0;
-			latMax = 40.0;
-			lngMin = -90.0;
-			lngMax = -90.0;
+			// //debug
+			// latMin = 30.0;
+			// latMax = 30.0;
+			// lngMin = -90.0;
+			// lngMax = -90.0;
 
 
 
@@ -93,7 +93,7 @@ namespace HousePricesDownload {
 			Task<long> previousCount = searchCollection.Find(filter).CountAsync();
 			previousCount.Wait();
 
-			download(json, latMin, lngMin, size, collection, searchCollection);
+			//download(json, latMin, lngMin, size, collection, searchCollection);
 			if(previousCount.Result==0) {
 
 				//new download
@@ -125,7 +125,7 @@ namespace HousePricesDownload {
 		int download(string json, double latMin, double lngMin, double size, IMongoCollection<BsonDocument> collection, IMongoCollection<BsonDocument> searchCollection) {
 
 			dynamic data;
-			int nearbyCount;
+			int nearbyCount = -1;
 			int numPages;
 			try {
 				json = getJSON(latMin, lngMin, size);
@@ -160,19 +160,36 @@ namespace HousePricesDownload {
 				}
 
 			try{
-				//new download
-				data = Newtonsoft.Json.JsonConvert.DeserializeObject(json);
-				insertRawJSON(json, collection);
-				nearbyCount = (int) data.map.nearbyProperties.Count;
-				numPages = data.lists.numPages;
-				insertSearch(latMin, lngMin, size, nearbyCount,numPages, searchCollection);
+				int error = 0;
+                //new download
+                try{
+                    data = Newtonsoft.Json.JsonConvert.DeserializeObject(json);
+                try{
+                    insertRawJSON(json, collection);
+                try{
+                    nearbyCount = (int) data.map.nearbyProperties.Count;
+                try{
+                    numPages = (int) data.list.numPages;
+                try{
+                    insertSearch(latMin, lngMin, size, nearbyCount,numPages, searchCollection);
+                }catch{error=5;}
+                }catch{error=4;}
+                }catch{error=3;}
+                }catch{error=2;}
+                }catch{error=1;
+                Console.WriteLine(error);
+                pause();
+                }
 				return nearbyCount;
-			
+            
 
 				//error
 			} catch {
 				insertSearch(latMin, lngMin, size, -1,-1, searchCollection);
-				Console.Write(json);
+				
+                System.IO.File.WriteAllText(@"C:\data\error"+latMin+"_"+lngMin+"_"+size+".json", json);
+
+                Console.Write(json);
 				Console.Write(" error");
 				System.Threading.Thread.Sleep(10000);
 				return -1;
