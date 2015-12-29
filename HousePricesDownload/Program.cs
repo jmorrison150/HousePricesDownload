@@ -14,24 +14,24 @@ namespace HousePricesDownload {
 		static void Main(string[] args) {
 
 
-            HousePricesDownload.MyClass myClassInstance = new MyClass(args[0], int.Parse(args[1]));
+			HousePricesDownload.MyClass myClassInstance = new MyClass(args[0], int.Parse(args[1]));
 			myClassInstance.initialize();
 		}
 	}
 
 	class MyClass {
-        string proxy;
-				int port;
+		string proxy;
+		int port;
 		protected static IMongoClient client;
 		protected static IMongoDatabase test;
 		double sizeMax = 10.0;
 		double sizeMin = 0.1;
 		double factor = 10;
 		//double[] factors = new double[4] {10.0, 1.0, 0.1, 0.01};
-        public MyClass(string ipAddress, int _port){
-            proxy = ipAddress;
-						port = _port;
-        }
+		public MyClass(string ipAddress, int _port) {
+			proxy = ipAddress;
+			port = _port;
+		}
 
 
 		public void initialize() {
@@ -105,21 +105,22 @@ namespace HousePricesDownload {
 
 				//new download
 				nearbyCount = download(json, latMin, lngMin, size, collection, searchCollection);
-				
 
 
-			}
-            else {
+
+			} else {
 				//use old download
 				Task<BsonDocument> task = searchCollection.Find(filter).FirstAsync();
 				BsonDocument previousSearch = task.Result;
 				nearbyCount = previousSearch["count"].AsInt32;
 				Console.WriteLine("previousCount= "+nearbyCount.ToString());
 
-                //retry error
-                if(previousSearch["count"].AsInt32 <0){
-                    nearbyCount = download(json, latMin, lngMin, size, collection, searchCollection);
-                } 
+				//retry error
+				if(previousSearch["count"].AsInt32 < -1) {
+					FilterDefinition<BsonDocument> delete = previousSearch;
+					searchCollection.DeleteOneAsync(delete);
+					nearbyCount = download(json, latMin, lngMin, size, collection, searchCollection);
+				}
 			}
 
 
@@ -137,75 +138,76 @@ namespace HousePricesDownload {
 		}
 		int download(string json, double latMin, double lngMin, double size, IMongoCollection<BsonDocument> collection, IMongoCollection<BsonDocument> searchCollection) {
 
-            //insertSearch(latMin,lngMin,size,-3,-3,searchCollection);
-			
-            dynamic data;
-			int nearbyCount = -1;
+			insertSearch(latMin, lngMin, size, -1, -1, searchCollection);
+
+			dynamic data;
+			int nearbyCount = -2;
 			int numPages;
 			try {
-                //new download
+				//new download
 				json = getJSON(latMin, lngMin, size);
-			}catch{
+			} catch {
 				//connection error
-				insertSearch(latMin, lngMin, size, -1, -1, searchCollection);
+				insertSearch(latMin, lngMin, size, -2, -2, searchCollection);
 				Console.Write(json);
 				Console.Write(" connection error");
 				System.Threading.Thread.Sleep(10000);
-				return -1;
+				return -2;
 			}
 
 
-				//captcha
-				if(json[0]!='{') {
-					Console.Write(json);
-					Console.Write(" captcha");
-
-					
-					System.IO.File.WriteAllText(@"C:\data\captcha.html", json);
-					System.Diagnostics.Process.Start(@"C:\data\captcha.html");
+			//captcha
+			if(json[0]!='{') {
+				Console.Write(json);
+				Console.Write(" captcha");
 
 
+				System.IO.File.WriteAllText(@"C:\data\captcha.html", json);
+				System.Diagnostics.Process.Start(@"C:\data\captcha.html");
 
 
-					insertSearch(latMin, lngMin, size, -2, -2, searchCollection);
-					pause();
-					return -2;
-				}
 
-			try{
-                //log new search
+
+				insertSearch(latMin, lngMin, size, -3, -3, searchCollection);
+				pause();
+				return -3;
+			}
+
+			try {
+				//log new search
 				int error = 0;
-                try{
-                    data = Newtonsoft.Json.JsonConvert.DeserializeObject(json);
-                try{
-                    insertRawJSON(json, collection);
-                try{
-                    nearbyCount = (int) data.map.nearbyProperties.Count;
-                try{
-                    numPages = (int) data.list.numPages;
-                try{
-                    insertSearch(latMin, lngMin, size, nearbyCount,numPages, searchCollection);
-                }catch{error=5;}
-                }catch{error=4;}
-                }catch{error=3;}
-                }catch{error=2;}
-                }catch{error=1;
-                Console.WriteLine("error= "+error+",");
-                pause();
-                }
+				try {
+					data = Newtonsoft.Json.JsonConvert.DeserializeObject(json);
+					try {
+						insertRawJSON(json, collection);
+						try {
+							nearbyCount = (int) data.map.nearbyProperties.Count;
+							try {
+								numPages = (int) data.list.numPages;
+								try {
+									insertSearch(latMin, lngMin, size, nearbyCount, numPages, searchCollection);
+								} catch { error=5; }
+							} catch { error=4; }
+						} catch { error=3; }
+					} catch { error=2; }
+				} catch {
+					error=1;
+					Console.WriteLine("error= "+error+",");
+					pause();
+				}
 				return nearbyCount;
-            
+
 
 				//error
 			} catch {
-				insertSearch(latMin, lngMin, size, -1,-1, searchCollection);
-				
-                System.IO.File.WriteAllText(@"C:\data\error"+latMin+"_"+lngMin+"_"+size+".json", json);
+				insertSearch(latMin, lngMin, size, -2, -2, searchCollection);
 
-                Console.Write(json);
+				System.IO.File.WriteAllText(@"C:\data\error"+latMin+"_"+lngMin+"_"+size+".json", json);
+
+				Console.Write(json);
 				Console.Write(" unknown error (writing to file)");
 				System.Threading.Thread.Sleep(10000);
-				return -1;
+				return -2;
 			}
 
 
@@ -217,18 +219,25 @@ namespace HousePricesDownload {
 			collection.InsertOneAsync(document);
 
 		}
-		void insertSearch(double lat, double lng, double size, int count,int numPages, IMongoCollection<BsonDocument> searchCollection) {
+		void insertSearch(double lat, double lng, double size, int count, int numPages, IMongoCollection<BsonDocument> searchCollection) {
 			BsonDocument document;
 			document = new BsonDocument {
                     
-                    {"lat", lat},
-                    {"lng", lng},
-                    {"size",size},
-                    {"count", count},
-                    {"numPages",numPages}
-                    };
+				//{"_id",lng.ToString()+"_"+lat.ToString()+"_"+size.ToString()},
+				{"lat", lat},
+				{"lng", lng},
+				{"size",size},
+				{"count", count},
+				{"numPages",numPages}
+			};
+			FilterDefinition<BsonDocument> index = new BsonDocument{
+				{"lat", lat},
+				{"lng", lng},
+				{"size",size}
+			};
 
-			searchCollection.InsertOneAsync(document);
+			searchCollection.ReplaceOneAsync(index,document);
+			//searchCollection.InsertOneAsync(document);
 			Console.Write("document[\"count\"]= "+document["count"]);
 
 		}
@@ -239,7 +248,7 @@ namespace HousePricesDownload {
 			string lngMax = string.Format("{0:0}", ( ( lng+( size ) )*1000000 ));
 			string latMax = string.Format("{0:0}", ( ( lat+( size ) )*1000000 ));
 			int page = 1;
-            int zoom = 19;
+			int zoom = 19;
 
 			//string jmorrisonco = "http://www.jmorrison.co";
 			string url = "http://www.zillow.com/search/GetResults.htm"
@@ -285,9 +294,9 @@ namespace HousePricesDownload {
 			HttpWebRequest webReq = (HttpWebRequest) WebRequest.Create(url);
 			webReq.Method = "GET";
 			webReq.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:43.0) Gecko/20100101 Firefox/43.0";
-			webReq.Proxy = new WebProxy(proxy,port);     
+			webReq.Proxy = new WebProxy(proxy, port);
 			//webReq.Proxy = System.Net.IWebProxy "127.0.0.1";
-            HttpWebResponse webRes = null;
+			HttpWebResponse webRes = null;
 			try {
 				webRes  = (HttpWebResponse) webReq.GetResponse();
 			} catch {
