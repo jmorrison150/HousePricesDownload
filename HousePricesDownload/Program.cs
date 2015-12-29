@@ -283,8 +283,8 @@ namespace HousePricesDownload {
 			HttpWebRequest webReq = (HttpWebRequest) WebRequest.Create(url);
 			webReq.Method = "GET";
 			webReq.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:43.0) Gecko/20100101 Firefox/43.0";
-			webReq.AllowAutoRedirect = true;
-            //webReq.Proxy = System.Net.IWebProxy "127.0.0.1";
+			webReq.Proxy = new WebProxy("23.253.208.241",80);     
+			//webReq.Proxy = System.Net.IWebProxy "127.0.0.1";
             HttpWebResponse webRes = null;
 			try {
 				webRes  = (HttpWebResponse) webReq.GetResponse();
