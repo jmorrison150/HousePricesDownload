@@ -138,7 +138,7 @@ namespace HousePricesDownload {
 		}
 		int download(string json, double latMin, double lngMin, double size, IMongoCollection<BsonDocument> collection, IMongoCollection<BsonDocument> searchCollection) {
 
-			insertSearch(latMin, lngMin, size, -1, -1, searchCollection);
+			//insertSearch(latMin, lngMin, size, -1, -1, searchCollection);
 
 			dynamic data;
 			int nearbyCount = -2;
