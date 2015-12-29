@@ -12,19 +12,24 @@ using MongoDB.Driver;
 namespace HousePricesDownload {
 	class Program {
 		static void Main(string[] args) {
-			HousePricesDownload.MyClass myClassInstance = new MyClass();
+
+
+            HousePricesDownload.MyClass myClassInstance = new MyClass(args[0]);
 			myClassInstance.initialize();
 		}
 	}
 
 	class MyClass {
+        string proxy;
 		protected static IMongoClient client;
 		protected static IMongoDatabase test;
-		double sizeMax = 1.0;
-		double sizeMin = 1.0;
+		double sizeMax = 10.0;
+		double sizeMin = 0.1;
 		double factor = 10;
 		//double[] factors = new double[4] {10.0, 1.0, 0.1, 0.01};
-
+        public MyClass(string ipAddress){
+            proxy = ipAddress;
+        }
 
 
 		public void initialize() {
@@ -101,17 +106,23 @@ namespace HousePricesDownload {
 				
 
 
-			} else {
+			}
+            else {
 				//use old download
 				Task<BsonDocument> task = searchCollection.Find(filter).FirstAsync();
 				BsonDocument previousSearch = task.Result;
 				nearbyCount = previousSearch["count"].AsInt32;
-				Console.WriteLine(" "+nearbyCount.ToString());
+				Console.WriteLine("previousCount= "+nearbyCount.ToString());
+
+                //retry error
+                if(previousSearch["count"].AsInt32 <0){
+                    nearbyCount = download(json, latMin, lngMin, size, collection, searchCollection);
+                } 
 			}
 
 
 			//recursive at smaller scale
-			if(( nearbyCount>500 ) && ( size > sizeMin )) {
+			if(( nearbyCount>=900 ) && ( size > sizeMin )) {
 				double size01 = size / factor;
 				for(int i = 0; i < factor; i++) {
 					for(int j = 0; j < factor; j++) {
@@ -124,15 +135,15 @@ namespace HousePricesDownload {
 		}
 		int download(string json, double latMin, double lngMin, double size, IMongoCollection<BsonDocument> collection, IMongoCollection<BsonDocument> searchCollection) {
 
-			dynamic data;
+            //insertSearch(latMin,lngMin,size,-3,-3,searchCollection);
+			
+            dynamic data;
 			int nearbyCount = -1;
 			int numPages;
 			try {
+                //new download
 				json = getJSON(latMin, lngMin, size);
 			}catch{
-
-
-
 				//connection error
 				insertSearch(latMin, lngMin, size, -1, -1, searchCollection);
 				Console.Write(json);
@@ -160,8 +171,8 @@ namespace HousePricesDownload {
 				}
 
 			try{
+                //log new search
 				int error = 0;
-                //new download
                 try{
                     data = Newtonsoft.Json.JsonConvert.DeserializeObject(json);
                 try{
@@ -177,7 +188,7 @@ namespace HousePricesDownload {
                 }catch{error=3;}
                 }catch{error=2;}
                 }catch{error=1;
-                Console.WriteLine(error);
+                Console.WriteLine("error= "+error+",");
                 pause();
                 }
 				return nearbyCount;
@@ -190,7 +201,7 @@ namespace HousePricesDownload {
                 System.IO.File.WriteAllText(@"C:\data\error"+latMin+"_"+lngMin+"_"+size+".json", json);
 
                 Console.Write(json);
-				Console.Write(" error");
+				Console.Write(" unknown error (writing to file)");
 				System.Threading.Thread.Sleep(10000);
 				return -1;
 			}
@@ -212,11 +223,11 @@ namespace HousePricesDownload {
                     {"lng", lng},
                     {"size",size},
                     {"count", count},
-										{"numPages",numPages}
+                    {"numPages",numPages}
                     };
 
-			Console.Write(document["size"]+","+document["count"]);
 			searchCollection.InsertOneAsync(document);
+			Console.Write("document[\"count\"]= "+document["count"]);
 
 		}
 		private string getJSON(double lat, double lng, double size) {
@@ -226,6 +237,7 @@ namespace HousePricesDownload {
 			string lngMax = string.Format("{0:0}", ( ( lng+( size ) )*1000000 ));
 			string latMax = string.Format("{0:0}", ( ( lat+( size ) )*1000000 ));
 			int page = 1;
+            int zoom = 19;
 
 			//string jmorrisonco = "http://www.jmorrison.co";
 			string url = "http://www.zillow.com/search/GetResults.htm"
@@ -251,7 +263,7 @@ namespace HousePricesDownload {
                 + "&" + "ds=all"
                 + "&" + "pmf=1"
                 + "&" + "pf=1"
-                + "&" + "zoom=19"
+                + "&" + "zoom="+zoom
                 + "&" + "rect="
                 + lngMin
                 + "," + latMin
@@ -264,7 +276,7 @@ namespace HousePricesDownload {
                 + "&" + "disp=1"
                 + "&" + "listright=true"
                 + "&" + "isMapSearch=true"
-                + "&" + "zoom=19";
+                + "&" + "zoom="+zoom;
 
 
 
@@ -272,7 +284,8 @@ namespace HousePricesDownload {
 			webReq.Method = "GET";
 			webReq.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:43.0) Gecko/20100101 Firefox/43.0";
 			webReq.AllowAutoRedirect = true;
-			HttpWebResponse webRes = null;
+            //webReq.Proxy = System.Net.IWebProxy "127.0.0.1";
+            HttpWebResponse webRes = null;
 			try {
 				webRes  = (HttpWebResponse) webReq.GetResponse();
 			} catch {

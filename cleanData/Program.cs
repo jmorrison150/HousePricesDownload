@@ -21,18 +21,23 @@ class Program {
 				var batch = cursor.Current;
 				foreach(var doc in batch) {
 					BsonArray a = doc["map"]["nearbyProperties"].AsBsonArray;
-
+                    
+                    
 					BsonDocument[] docs = new BsonDocument[a.Count];
 					for(int i = 0; i < a.Count; i++) {
-						if(!(a[i][7][0].BsonType==BsonType.Int32)){
-						continue;	
-						}
+                        var filter = Builders<BsonDocument>.Filter.Eq("_id", a[i][0]);
+                        //Task<long> previousCount = cleanData.Find(filter).CountAsync();
+			            //previousCount.Wait();
+                        //if(previousCount.Result>0) {continue;}
+
+						if(!(a[i][7][0].BsonType==BsonType.Int32)){	continue; }
+                        
+                    
 						
 						double lat = (double) a[i][1].AsInt32 /1000000.0;
 						double lng = (double) a[i][2].AsInt32 /1000000.0;
 						int price = (int) a[i][7][0].AsInt32;
 						
-						var filter = Builders<BsonDocument>.Filter.Eq("_id", a[i][0]);
 						var update = Builders<BsonDocument>.Update
 							.Set("lat", lat)
 							.Set("lng", lng)

@@ -26,13 +26,15 @@ namespace GlobalMapTiles {
 			var client = new MongoClient("mongodb://localhost:27017");
 			var database = client.GetDatabase("test");
 			var collection = database.GetCollection<BsonDocument>("prop");
+            //int maxZoom = 11;
 
 			//world
-			process("0", collection);
-			process("1", collection);
-			process("2", collection);
-			process("3", collection);
-
+            for(int maxZoom=7;maxZoom<=11;maxZoom+=4){
+			process("0", collection, maxZoom);
+			process("1", collection, maxZoom);
+			process("2", collection, maxZoom);
+			process("3", collection, maxZoom);
+            }
 
 
 			// ////dfw
@@ -52,18 +54,18 @@ namespace GlobalMapTiles {
 
 
 		}
-		void process(string quadTree, IMongoCollection<BsonDocument> collection) {
+		void process(string quadTree, IMongoCollection<BsonDocument> collection, int maxZoom) {
 
 			Task<long> tsk = queryToBitmap(quadTree, collection);
 			tsk.Wait();
 
 			if(tsk.Result>0) {
 				int zoom = quadTree.Length;
-				int maxZoom = 11;
+		
 				if(zoom <= maxZoom) {
 					string[] childrenTiles = getChildrenTiles(quadTree);
 					foreach(string child in childrenTiles) {
-						process(child, collection);
+						process(child, collection, maxZoom);
 					}
 				}
 			}
@@ -78,8 +80,10 @@ namespace GlobalMapTiles {
 
 			double[] bounds = proj.tileLatLngBounds(tileXYZ[0], tileXYZ[1], tileXYZ[2]);
 			var builder = Builders<BsonDocument>.Filter;
-			var filter = builder.Exists("nearMin", true) & builder.Gt("lat", bounds[0]) & builder.Lt("lat", bounds[1]) & builder.Gt("lng", bounds[2]) & builder.Lt("lng", bounds[3]);
-			long count = collection.Find(filter).CountAsync().Result;
+			//var filter = builder.Exists("nearMin", true) & builder.Gt("lat", bounds[0]) & builder.Lt("lat", bounds[1]) & builder.Gt("lng", bounds[2]) & builder.Lt("lng", bounds[3]);
+			var filter =builder.Gt("lat", bounds[0]) & builder.Lt("lat", bounds[1]) & builder.Gt("lng", bounds[2]) & builder.Lt("lng", bounds[3]);
+			
+            long count = collection.Find(filter).CountAsync().Result;
 			Console.Write(count.ToString()+",");
 			if(count==0) { return count; }
 
@@ -98,16 +102,16 @@ namespace GlobalMapTiles {
 						double latitude =(double) doc["lat"].AsDouble;
 						double longitude =(double) doc["lng"].AsDouble;
 
-						//Draw.price(p , latitude, longitude, zoom, bitmap);
-						Draw.near(doc["price"].AsInt32, doc["nearMin"].AsInt32, doc["nearMax"].AsInt32, doc["lat"].AsDouble, doc["lng"].AsDouble, zoom, bitmap);
+						Draw.price(p , latitude, longitude, zoom, bitmap);
+						//Draw.near(doc["price"].AsInt32, doc["nearMin"].AsInt32, doc["nearMax"].AsInt32, doc["lat"].AsDouble, doc["lng"].AsDouble, zoom, bitmap);
 					}
 				}
 			}
 
 			////save bitmap
-			string pathString = "./images/"+tileXYZ[2]+"/"+tileXYZ[0]+"/";
+			string pathString = @"C:\data\HousePricesDownload\web\images\"+tileXYZ[2]+"/"+tileXYZ[0]+"/";
 			System.IO.Directory.CreateDirectory(pathString);
-			bitmap.Save("./images/"+tileXYZ[2]+"/"+tileXYZ[0]+"/"+tileXYZ[1]+".png");
+			bitmap.Save(@"C:\data\HousePricesDownload\web\images\"+tileXYZ[2]+"/"+tileXYZ[0]+"/"+tileXYZ[1]+".png");
 
 
 			return count;
