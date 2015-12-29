@@ -14,21 +14,23 @@ namespace HousePricesDownload {
 		static void Main(string[] args) {
 
 
-            HousePricesDownload.MyClass myClassInstance = new MyClass(args[0]);
+            HousePricesDownload.MyClass myClassInstance = new MyClass(args[0], int.Parse(args[1]));
 			myClassInstance.initialize();
 		}
 	}
 
 	class MyClass {
         string proxy;
+				int port;
 		protected static IMongoClient client;
 		protected static IMongoDatabase test;
 		double sizeMax = 10.0;
 		double sizeMin = 0.1;
 		double factor = 10;
 		//double[] factors = new double[4] {10.0, 1.0, 0.1, 0.01};
-        public MyClass(string ipAddress){
+        public MyClass(string ipAddress, int _port){
             proxy = ipAddress;
+						port = _port;
         }
 
 
@@ -283,7 +285,7 @@ namespace HousePricesDownload {
 			HttpWebRequest webReq = (HttpWebRequest) WebRequest.Create(url);
 			webReq.Method = "GET";
 			webReq.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:43.0) Gecko/20100101 Firefox/43.0";
-			webReq.Proxy = new WebProxy("23.253.208.241",80);     
+			webReq.Proxy = new WebProxy(proxy,port);     
 			//webReq.Proxy = System.Net.IWebProxy "127.0.0.1";
             HttpWebResponse webRes = null;
 			try {
