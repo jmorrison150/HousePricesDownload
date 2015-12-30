@@ -162,21 +162,23 @@ namespace HousePricesDownload {
 			FilterDefinition<BsonDocument> filter = builder.Eq("lat", latMin) & builder.Eq("lng", lngMin) & builder.Eq("size", size);
 			Task<long> previousCount = searchCollection.Find(filter).CountAsync();
 			previousCount.Wait();
+            //Console.Write(previousCount.Result);
 			if(previousCount.Result==0) {
 				//new download
+//Console.Write("new download");
 				nearbyCount = download(json, latMin, lngMin, size, collection, searchCollection);
 			} else {
 				Task<BsonDocument> task = searchCollection.Find(filter).FirstAsync();
 				BsonDocument previousSearch = task.Result;
 				nearbyCount = previousSearch["count"].AsInt32;
-
-				if(nearbyCount==0) {
+				if(nearbyCount>=0) {
 					//use old download
 					Console.WriteLine("previousCount= "+nearbyCount.ToString());
 				} else {
 					//retry error
 					FilterDefinition<BsonDocument> delete = previousSearch;
 					searchCollection.DeleteOneAsync(delete);
+                    Console.Write("retry error");
 					nearbyCount = download(json, latMin, lngMin, size, collection, searchCollection);
 				}
 			}
@@ -195,7 +197,7 @@ namespace HousePricesDownload {
 
 		}
 		int download(string json, double latMin, double lngMin, double size, IMongoCollection<BsonDocument> collection, IMongoCollection<BsonDocument> searchCollection) {
-
+//Console.Write("downloading");
 			//insertSearch(latMin, lngMin, size, -1, -1, searchCollection);
 
 			dynamic data;
@@ -244,15 +246,17 @@ namespace HousePricesDownload {
 								numPages = (int) data.list.numPages;
 								try {
 									insertSearch(latMin, lngMin, size, nearbyCount, numPages, searchCollection);
-								} catch { error=5; }
-							} catch { error=4; }
-						} catch { error=3; }
-					} catch { error=2; }
+								} catch { error=5; Console.WriteLine("error= "+error+",");}
+							} catch { error=4; Console.WriteLine("error= "+error+",");}
+						} catch { error=3;Console.WriteLine("error= "+error+","); }
+					} catch { error=2;Console.WriteLine("error= "+error+","); }
 				} catch {
 					error=1;
+                    insertSearch(latMin, lngMin, size, -4, -4, searchCollection);
 					Console.WriteLine("error= "+error+",");
 					pause();
 				}
+                
 				return nearbyCount;
 
 
@@ -275,7 +279,7 @@ namespace HousePricesDownload {
 		void getProxies(out string[] proxies, out int[] ports) {
 			//string[] args = System.IO.File.ReadAllLines(@"C:\data\proxies.tsv");
 
-			StreamReader reader = new StreamReader(File.OpenRead(@"C:\data\proxies.tsv"));
+			StreamReader reader = new StreamReader(File.OpenRead(@"C:\data\HousePricesDownload\proxies.tsv"));
 			List<string> listA = new List<string>();
 			List<int> listB = new List<int>();
 			while(!reader.EndOfStream) {
@@ -327,8 +331,8 @@ namespace HousePricesDownload {
 				{"size",size}
 			};
 
-			searchCollection.ReplaceOneAsync(index, document);
-			//searchCollection.InsertOneAsync(document);
+			//searchCollection.ReplaceOneAsync(index, document);
+			searchCollection.InsertOneAsync(document);
 			Console.Write("document[\"count\"]= "+document["count"]);
 
 		}
