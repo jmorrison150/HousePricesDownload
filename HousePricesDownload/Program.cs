@@ -12,9 +12,7 @@ using MongoDB.Driver;
 namespace HousePricesDownload {
 	class Program {
 		static void Main(string[] args) {
-
-
-			HousePricesDownload.MyClass myClassInstance = new MyClass(args);
+			HousePricesDownload.MyClass myClassInstance = new MyClass();
 			myClassInstance.initialize();
 		}
 	}
@@ -28,12 +26,10 @@ namespace HousePricesDownload {
 		double sizeMin = 0.1;
 		double factor = 10;
 		//double[] factors = new double[4] {10.0, 1.0, 0.1, 0.01};
-		public MyClass(string[] args) {
-			for(int i=0; i<args.Length-1; i+=2 ){
-                int index = (int)(i*0.5);
-                proxies[index] = args[i];
-                ports[index] = args[i+1];
-            }
+
+
+		public MyClass() {
+			getProxies(out proxies, out ports);
 		}
 
 
@@ -77,45 +73,6 @@ namespace HousePricesDownload {
 			// lngMax = -90.0;
 
 
-			// for(double currentLng = lngMax; currentLng >=lngMin; currentLng -= sizeMax) {
-			// 	for(double currentLat = latMax; currentLat >=latMin; currentLat -= sizeMax) {
-			// 		run(currentLat, currentLng, sizeMax, collection, searchCollection);
-			// 	}
-			// }
-
-
-double currentMax,currentMin;
-map(i,)
-
-
-
-
-            int stepsLng = (int)((lngMax-lngMin)/sizeMax));
-for(int i=0;i<stepsLng;i++){
-    int proxyIndex = i%proxies.Length;
-}
-
-
-
-
-
-
-for(int i=proxies.Length;i<((lngMax-lngMin)/sizeMax;i++){}
-
-
-
-
-
-
-            Task[] tasks = new Task[proxies.Length];
-            
-            
-            for(int i=0;i<tasks.Length;i++){
-                (lngMin+(sizeMax*i)
-                
-
-                tasks[i] = run
-
 			for(double currentLng = lngMax; currentLng >=lngMin; currentLng -= sizeMax) {
 				for(double currentLat = latMax; currentLat >=latMin; currentLat -= sizeMax) {
 					run(currentLat, currentLng, sizeMax, collection, searchCollection);
@@ -123,6 +80,43 @@ for(int i=proxies.Length;i<((lngMax-lngMin)/sizeMax;i++){}
 			}
 
 
+			//double currentMax,currentMin;
+			//map(i,)
+
+
+
+
+			//						int stepsLng = (int)((lngMax-lngMin)/sizeMax));
+			//for(int i=0;i<stepsLng;i++){
+			//		int proxyIndex = i%proxies.Length;
+			//}
+
+
+
+
+
+
+			//for(int i=proxies.Length;i<((lngMax-lngMin)/sizeMax;i++){}
+
+
+
+
+
+
+			//						Task[] tasks = new Task[proxies.Length];
+
+
+			//						for(int i=0;i<tasks.Length;i++){
+			//								(lngMin+(sizeMax*i)
+
+
+			//								tasks[i] = run
+
+			//			for(double currentLng = lngMax; currentLng >=lngMin; currentLng -= sizeMax) {
+			//				for(double currentLat = latMax; currentLat >=latMin; currentLat -= sizeMax) {
+			//					run(currentLat, currentLng, sizeMax, collection, searchCollection);
+			//				}
+			//			}
 
 
 
@@ -134,14 +128,16 @@ for(int i=proxies.Length;i<((lngMax-lngMin)/sizeMax;i++){}
 
 
 
-                
-                                
-            }
 
-            
-            for(int i=0;i<tasks.Length;i++){
-                tasks[i] = tasks[i].Wait();                
-            }
+
+
+
+			//}
+
+
+			//for(int i=0;i<tasks.Length;i++){
+			//		tasks[i] = tasks[i].Wait();                
+			//}
 
 
 
@@ -154,35 +150,31 @@ for(int i=proxies.Length;i<((lngMax-lngMin)/sizeMax;i++){}
 
 			pause();
 		}
-		Task run(double latMin, double lngMin, double size, IMongoCollection<BsonDocument> collection, IMongoCollection<BsonDocument> searchCollection) {
+		void run(double latMin, double lngMin, double size, IMongoCollection<BsonDocument> collection, IMongoCollection<BsonDocument> searchCollection) {
 
 			Console.Write("("+lngMin+","+latMin+")");
 			int nearbyCount;
 			string json = "";
+			//download(json, latMin, lngMin, size, collection, searchCollection);
 
 			//test for previous search
 			var builder = Builders<BsonDocument>.Filter;
 			FilterDefinition<BsonDocument> filter = builder.Eq("lat", latMin) & builder.Eq("lng", lngMin) & builder.Eq("size", size);
 			Task<long> previousCount = searchCollection.Find(filter).CountAsync();
 			previousCount.Wait();
-
-			//download(json, latMin, lngMin, size, collection, searchCollection);
 			if(previousCount.Result==0) {
-
 				//new download
 				nearbyCount = download(json, latMin, lngMin, size, collection, searchCollection);
-
-
-
 			} else {
-				//use old download
 				Task<BsonDocument> task = searchCollection.Find(filter).FirstAsync();
 				BsonDocument previousSearch = task.Result;
 				nearbyCount = previousSearch["count"].AsInt32;
-				Console.WriteLine("previousCount= "+nearbyCount.ToString());
 
-				//retry error
-				if(previousSearch["count"].AsInt32 < -1) {
+				if(nearbyCount==0) {
+					//use old download
+					Console.WriteLine("previousCount= "+nearbyCount.ToString());
+				} else {
+					//retry error
 					FilterDefinition<BsonDocument> delete = previousSearch;
 					searchCollection.DeleteOneAsync(delete);
 					nearbyCount = download(json, latMin, lngMin, size, collection, searchCollection);
@@ -279,6 +271,39 @@ for(int i=proxies.Length;i<((lngMax-lngMin)/sizeMax;i++){}
 
 
 		}
+
+		void getProxies(out string[] proxies, out int[] ports) {
+			//string[] args = System.IO.File.ReadAllLines(@"C:\data\proxies.tsv");
+
+			StreamReader reader = new StreamReader(File.OpenRead(@"C:\data\proxies.tsv"));
+			List<string> listA = new List<string>();
+			List<int> listB = new List<int>();
+			while(!reader.EndOfStream) {
+				string line = reader.ReadLine();
+				string[] values = line.Split('\t');
+
+				listA.Add(values[0]);
+				listB.Add(int.Parse(values[1]));
+
+				Console.Write(values[0]+","+values[1]+",");
+			}
+
+			proxies = listA.ToArray();
+			ports = listB.ToArray();
+
+
+			//proxies = new string[(int) ( ( args.Length-1 )*0.5 )+1];
+			//ports = new int[(int) ( ( args.Length-1 )*0.5 )+1];
+			//for(int i=0; i<args.Length-1; i+=2) {
+			//	int index = (int) ( i*0.5 );
+
+			//	proxies[index] = args[i];
+			//	ports[index] = int.Parse(args[i+1]);
+			//}
+			//System.IO.File.WriteAllText(@"C:\data\captcha.html", json);
+			//System.Diagnostics.Process.Start(@"C:\data\captcha.html");
+
+		}
 		void insertRawJSON(string json, IMongoCollection<BsonDocument> collection) {
 			MongoDB.Bson.BsonDocument document = MongoDB.Bson.Serialization.BsonSerializer.Deserialize<BsonDocument>(json);
 			//            BsonDocument document = json.ToBsonDocument();
@@ -302,7 +327,7 @@ for(int i=proxies.Length;i<((lngMax-lngMin)/sizeMax;i++){}
 				{"size",size}
 			};
 
-			searchCollection.ReplaceOneAsync(index,document);
+			searchCollection.ReplaceOneAsync(index, document);
 			//searchCollection.InsertOneAsync(document);
 			Console.Write("document[\"count\"]= "+document["count"]);
 
@@ -360,8 +385,7 @@ for(int i=proxies.Length;i<((lngMax-lngMin)/sizeMax;i++){}
 			HttpWebRequest webReq = (HttpWebRequest) WebRequest.Create(url);
 			webReq.Method = "GET";
 			webReq.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:43.0) Gecko/20100101 Firefox/43.0";
-			webReq.Proxy = new WebProxy(proxy, port);
-			//webReq.Proxy = System.Net.IWebProxy "127.0.0.1";
+			//webReq.Proxy = new WebProxy(proxies[0], ports[0]);
 			HttpWebResponse webRes = null;
 			try {
 				webRes  = (HttpWebResponse) webReq.GetResponse();

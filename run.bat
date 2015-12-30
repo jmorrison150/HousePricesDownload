@@ -1,1 +1,1 @@
-C:\data\HousePricesDownload\HousePricesDownload\bin\Debug\HousePricesDownload.exe "127.0.0.1"
+C:\data\HousePricesDownload\HousePricesDownload\bin\Debug\HousePricesDownload.exe "52.8.155.10" "80"
