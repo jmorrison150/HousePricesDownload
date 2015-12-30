@@ -14,23 +14,26 @@ namespace HousePricesDownload {
 		static void Main(string[] args) {
 
 
-			HousePricesDownload.MyClass myClassInstance = new MyClass(args[0], int.Parse(args[1]));
+			HousePricesDownload.MyClass myClassInstance = new MyClass(args);
 			myClassInstance.initialize();
 		}
 	}
 
 	class MyClass {
-		string proxy;
-		int port;
+		string[] proxies;
+		int[] ports;
 		protected static IMongoClient client;
 		protected static IMongoDatabase test;
 		double sizeMax = 10.0;
 		double sizeMin = 0.1;
 		double factor = 10;
 		//double[] factors = new double[4] {10.0, 1.0, 0.1, 0.01};
-		public MyClass(string ipAddress, int _port) {
-			proxy = ipAddress;
-			port = _port;
+		public MyClass(string[] args) {
+			for(int i=0; i<args.Length-1; i+=2 ){
+                int index = (int)(i*0.5);
+                proxies[index] = args[i];
+                ports[index] = args[i+1];
+            }
 		}
 
 
@@ -74,7 +77,44 @@ namespace HousePricesDownload {
 			// lngMax = -90.0;
 
 
+			// for(double currentLng = lngMax; currentLng >=lngMin; currentLng -= sizeMax) {
+			// 	for(double currentLat = latMax; currentLat >=latMin; currentLat -= sizeMax) {
+			// 		run(currentLat, currentLng, sizeMax, collection, searchCollection);
+			// 	}
+			// }
 
+
+double currentMax,currentMin;
+map(i,)
+
+
+
+
+            int stepsLng = (int)((lngMax-lngMin)/sizeMax));
+for(int i=0;i<stepsLng;i++){
+    int proxyIndex = i%proxies.Length;
+}
+
+
+
+
+
+
+for(int i=proxies.Length;i<((lngMax-lngMin)/sizeMax;i++){}
+
+
+
+
+
+
+            Task[] tasks = new Task[proxies.Length];
+            
+            
+            for(int i=0;i<tasks.Length;i++){
+                (lngMin+(sizeMax*i)
+                
+
+                tasks[i] = run
 
 			for(double currentLng = lngMax; currentLng >=lngMin; currentLng -= sizeMax) {
 				for(double currentLat = latMax; currentLat >=latMin; currentLat -= sizeMax) {
@@ -82,13 +122,39 @@ namespace HousePricesDownload {
 				}
 			}
 
+
+
+
+
+
+
+
+
+
+
+
+
+                
+                                
+            }
+
+            
+            for(int i=0;i<tasks.Length;i++){
+                tasks[i] = tasks[i].Wait();                
+            }
+
+
+
+
+
+
 			DateTime endTime = DateTime.Now;
 			TimeSpan elapsedTime = endTime-startTime;
 			Console.WriteLine("elapsedTime = "+elapsedTime);
 
 			pause();
 		}
-		void run(double latMin, double lngMin, double size, IMongoCollection<BsonDocument> collection, IMongoCollection<BsonDocument> searchCollection) {
+		Task run(double latMin, double lngMin, double size, IMongoCollection<BsonDocument> collection, IMongoCollection<BsonDocument> searchCollection) {
 
 			Console.Write("("+lngMin+","+latMin+")");
 			int nearbyCount;
