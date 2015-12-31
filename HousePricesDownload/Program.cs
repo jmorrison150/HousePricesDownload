@@ -80,6 +80,18 @@ namespace HousePricesDownload {
 			}
 
 
+            
+            sizeMin = 0.01;
+			for(double currentLng = lngMax; currentLng >=lngMin; currentLng -= sizeMax) {
+				for(double currentLat = latMax; currentLat >=latMin; currentLat -= sizeMax) {
+					run(currentLat, currentLng, sizeMax, collection, searchCollection);
+				}
+			}
+
+
+
+
+
 			//double currentMax,currentMin;
 			//map(i,)
 
