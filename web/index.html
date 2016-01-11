@@ -176,7 +176,7 @@ function ProcessSVData(data, status) {
     var panoramaOptions = { disableDefaultUI: true };
     Panorama = new google.maps.StreetViewPanorama(document.getElementById('streetview'), panoramaOptions);
     var sv = new google.maps.StreetViewService();
-    sv.getPanoramaByLocation(mapCenter, 5000, ProcessSVData);
+    sv.getPanoramaByLocation(mapCenter, 50000, ProcessSVData);
         //clicks
     google.maps.event.addListener(gMap, 'click', function (event) { sv.getPanoramaByLocation(event.latLng, 50, ProcessSVData); });
     

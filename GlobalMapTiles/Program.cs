@@ -26,15 +26,15 @@ namespace GlobalMapTiles {
 			var client = new MongoClient("mongodb://localhost:27017");
 			var database = client.GetDatabase("test");
 			var collection = database.GetCollection<BsonDocument>("prop");
-            //int maxZoom = 11;
+            int maxZoom = 13;
 
 			//world
-            for(int maxZoom=7;maxZoom<=11;maxZoom+=4){
-			process("0", collection, maxZoom);
-			process("1", collection, maxZoom);
-			process("2", collection, maxZoom);
+            //for(int maxZoom=7;maxZoom<=11;maxZoom+=4){
 			process("3", collection, maxZoom);
-            }
+			process("2", collection, maxZoom);
+			process("1", collection, maxZoom);
+			process("0", collection, maxZoom);
+            //}
 
 
 			// ////dfw
@@ -119,10 +119,10 @@ namespace GlobalMapTiles {
 		}
 		string[] getChildrenTiles(string quadTree) {
 			string[] children = new string[4];
-			children[0] = quadTree+"0";
-			children[1] = quadTree+"1";
-			children[2] = quadTree+"2";
-			children[3] = quadTree+"3";
+			children[3] = quadTree+"0";
+			children[2] = quadTree+"1";
+			children[1] = quadTree+"2";
+			children[0] = quadTree+"3";
 
 			return children;
 		}

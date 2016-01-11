@@ -23,7 +23,7 @@ namespace HousePricesDownload {
 		protected static IMongoClient client;
 		protected static IMongoDatabase test;
 		double sizeMax = 10.0;
-		double sizeMin = 0.1;
+		double sizeMin = 0.01;
 		double factor = 10;
 		//double[] factors = new double[4] {10.0, 1.0, 0.1, 0.01};
 
@@ -73,15 +73,44 @@ namespace HousePricesDownload {
 			// lngMax = -90.0;
 
 
-			for(double currentLng = lngMax; currentLng >=lngMin; currentLng -= sizeMax) {
-				for(double currentLat = latMax; currentLat >=latMin; currentLat -= sizeMax) {
-					run(currentLat, currentLng, sizeMax, collection, searchCollection);
-				}
-			}
 
-
+			// //houston
+			// latMin = 29.0;
+			// latMax = 30.0;
+			// lngMin = -96.0;
+			// lngMax = -95.0;
+            // sizeMax = 1.0;
+            // sizeMin = 0.1;
             
-            sizeMin = 0.01;
+            
+			// for(double currentLng = lngMax; currentLng >=lngMin; currentLng -= sizeMax) {
+			// 	for(double currentLat = latMax; currentLat >=latMin; currentLat -= sizeMax) {
+			// 		run(currentLat, currentLng, sizeMax, collection, searchCollection);
+			// 	}
+			// }
+
+
+            // sizeMax = 1.0;
+            // sizeMin = 0.01;
+
+			// for(double currentLng = lngMax; currentLng >=lngMin; currentLng -= sizeMax) {
+			// 	for(double currentLat = latMax; currentLat >=latMin; currentLat -= sizeMax) {
+			// 		run(currentLat, currentLng, sizeMax, collection, searchCollection);
+			// 	}
+			// }
+            // //endhouston
+
+
+
+
+			// //usa
+			// latMin = 20.0;
+			// latMax = 50.0;
+			// lngMin = -130.0;
+			// lngMax = -60.0;  
+            // sizeMax = 10.0;          
+            // sizeMin = 0.01;
+            
 			for(double currentLng = lngMax; currentLng >=lngMin; currentLng -= sizeMax) {
 				for(double currentLat = latMax; currentLat >=latMin; currentLat -= sizeMax) {
 					run(currentLat, currentLng, sizeMax, collection, searchCollection);
@@ -345,7 +374,8 @@ namespace HousePricesDownload {
 
 			//searchCollection.ReplaceOneAsync(index, document);
 			searchCollection.InsertOneAsync(document);
-			Console.Write("document[\"count\"]= "+document["count"]);
+			//Console.Write("document[\"count\"]= "+document["count"]);
+            Console.WriteLine(document["count"]);
 
 		}
 		private string getJSON(double lat, double lng, double size) {
