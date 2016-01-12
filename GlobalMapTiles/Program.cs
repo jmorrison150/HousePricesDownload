@@ -29,11 +29,11 @@ namespace GlobalMapTiles {
 			//int maxZoom = 11;
 
 			//world
-			for(int maxZoom=7; maxZoom<=11; maxZoom+=4) {
-				process("0", collection, maxZoom);
-				process("1", collection, maxZoom);
-				process("2", collection, maxZoom);
+			for(int maxZoom=4; maxZoom<=11; maxZoom+=7) {
 				process("3", collection, maxZoom);
+                process("2", collection, maxZoom);
+                process("1", collection, maxZoom);
+                process("0", collection, maxZoom);
 			}
 
 
@@ -166,15 +166,17 @@ namespace GlobalMapTiles {
 			System.IO.Directory.CreateDirectory(pathString);
 			bitmap.Save(@"C:\data\HousePricesDownload\web\images\"+tileXYZ[2]+"/"+tileXYZ[0]+"/"+tileXYZ[1]+".png");
 
-			return count;
+            long maxCount = Math.Max(count,count1);
+
+			return maxCount;
 
 		}
 		string[] getChildrenTiles(string quadTree) {
 			string[] children = new string[4];
-			children[0] = quadTree+"0";
-			children[1] = quadTree+"1";
-			children[2] = quadTree+"2";
-			children[3] = quadTree+"3";
+			children[3] = quadTree+"0";
+			children[2] = quadTree+"1";
+			children[1] = quadTree+"2";
+			children[0] = quadTree+"3";
 
 			return children;
 		}
