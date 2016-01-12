@@ -26,15 +26,15 @@ namespace GlobalMapTiles {
 			var client = new MongoClient("mongodb://localhost:27017");
 			var database = client.GetDatabase("test");
 			var collection = database.GetCollection<BsonDocument>("prop");
-            //int maxZoom = 11;
+			//int maxZoom = 11;
 
 			//world
-            for(int maxZoom=7;maxZoom<=11;maxZoom+=4){
-			process("0", collection, maxZoom);
-			process("1", collection, maxZoom);
-			process("2", collection, maxZoom);
-			process("3", collection, maxZoom);
-            }
+			for(int maxZoom=7; maxZoom<=11; maxZoom+=4) {
+				process("0", collection, maxZoom);
+				process("1", collection, maxZoom);
+				process("2", collection, maxZoom);
+				process("3", collection, maxZoom);
+			}
 
 
 			// ////dfw
@@ -61,7 +61,7 @@ namespace GlobalMapTiles {
 
 			if(tsk.Result>0) {
 				int zoom = quadTree.Length;
-		
+
 				if(zoom <= maxZoom) {
 					string[] childrenTiles = getChildrenTiles(quadTree);
 					foreach(string child in childrenTiles) {
@@ -79,40 +79,92 @@ namespace GlobalMapTiles {
 			int zoom = quadTree.Length;
 
 			double[] bounds = proj.tileLatLngBounds(tileXYZ[0], tileXYZ[1], tileXYZ[2]);
-			var builder = Builders<BsonDocument>.Filter;
+			FilterDefinitionBuilder<BsonDocument> builder = Builders<BsonDocument>.Filter;
 			//var filter = builder.Exists("nearMin", true) & builder.Gt("lat", bounds[0]) & builder.Lt("lat", bounds[1]) & builder.Gt("lng", bounds[2]) & builder.Lt("lng", bounds[3]);
-			var filter =builder.Gt("lat", bounds[0]) & builder.Lt("lat", bounds[1]) & builder.Gt("lng", bounds[2]) & builder.Lt("lng", bounds[3]);
-			
-            long count = collection.Find(filter).CountAsync().Result;
-			Console.Write(count.ToString()+",");
-			if(count==0) { return count; }
+			FilterDefinition<BsonDocument> filter = builder.Gt("lat", bounds[0]);
+			filter = filter & builder.Lt("lat", bounds[1]);
+			filter = filter & builder.Gt("lng", bounds[2]);
+			filter = filter & builder.Lt("lng", bounds[3]);
 
-			using(var cursor = await collection.FindAsync(filter)) {
-				while(await cursor.MoveNextAsync()) {
-					var batch = cursor.Current;
-					int current = 0;
 
-					foreach(var doc in batch) {
-						current++;
-						//if(!(5000<current && current<10000 && current%3==0)){continue;}
+			//select dallas
+			filter = filter & builder.Gt("lat", 32.4);
+			filter = filter & builder.Gt("lng", -97.6);
+			filter = filter & builder.Lt("lat", 33.1);
+			filter = filter & builder.Lt("lng", -96.4);
 
-						if(doc["price"].BsonType!=BsonType.Int32) { continue; }
 
-						int p = (int) doc["price"].AsInt32;
-						double latitude =(double) doc["lat"].AsDouble;
-						double longitude =(double) doc["lng"].AsDouble;
 
-						Draw.price(p , latitude, longitude, zoom, bitmap);
-						//Draw.near(doc["price"].AsInt32, doc["nearMin"].AsInt32, doc["nearMax"].AsInt32, doc["lat"].AsDouble, doc["lng"].AsDouble, zoom, bitmap);
+			FilterDefinition<BsonDocument> filter1 = builder.Gt("lat", bounds[0]);
+			filter1 = filter1 & builder.Lt("lat", bounds[1]);
+			filter1 = filter1 & builder.Gt("lng", bounds[2]);
+			filter1 = filter1 & builder.Lt("lng", bounds[3]);
+
+			//select houston
+			filter1 = filter1 & builder.Gt("lat", 29.0);
+			filter1 = filter1 & builder.Gt("lng", -96.0);
+			filter1 = filter1 & builder.Lt("lat", 30.0);
+			filter1 = filter1 & builder.Lt("lng", -94.0);
+
+
+
+			long count = collection.Find(filter).CountAsync().Result;
+			long count1 = collection.Find(filter1).CountAsync().Result;
+			Console.Write(count.ToString()+","+count1.ToString()+",");
+			if(count==0 && count1 ==0) { return count; }
+
+			if(count>0) {
+				using(var cursor = await collection.FindAsync(filter)) {
+					while(await cursor.MoveNextAsync()) {
+						var batch = cursor.Current;
+						int current = 0;
+
+						foreach(var doc in batch) {
+							current++;
+							//if(!(5000<current && current<10000 && current%3==0)){continue;}
+
+							if(doc["price"].BsonType!=BsonType.Int32) { continue; }
+
+							int p = (int) doc["price"].AsInt32;
+							double latitude =(double) doc["lat"].AsDouble;
+							double longitude =(double) doc["lng"].AsDouble;
+
+							Draw.price(p, latitude, longitude, zoom, bitmap);
+							//Draw.near(doc["price"].AsInt32, doc["nearMin"].AsInt32, doc["nearMax"].AsInt32, doc["lat"].AsDouble, doc["lng"].AsDouble, zoom, bitmap);
+						}
 					}
 				}
 			}
+
+			if(count1>0) {
+				using(var cursor = await collection.FindAsync(filter1)) {
+					while(await cursor.MoveNextAsync()) {
+						var batch = cursor.Current;
+						int current = 0;
+
+						foreach(var doc in batch) {
+							current++;
+							//if(!(5000<current && current<10000 && current%3==0)){continue;}
+
+							if(doc["price"].BsonType!=BsonType.Int32) { continue; }
+
+							int p = (int) doc["price"].AsInt32;
+							double latitude =(double) doc["lat"].AsDouble;
+							double longitude =(double) doc["lng"].AsDouble;
+
+							Draw.price(p, latitude, longitude, zoom, bitmap);
+							//Draw.near(doc["price"].AsInt32, doc["nearMin"].AsInt32, doc["nearMax"].AsInt32, doc["lat"].AsDouble, doc["lng"].AsDouble, zoom, bitmap);
+						}
+					}
+				}
+			}
+
+
 
 			////save bitmap
 			string pathString = @"C:\data\HousePricesDownload\web\images\"+tileXYZ[2]+"/"+tileXYZ[0]+"/";
 			System.IO.Directory.CreateDirectory(pathString);
 			bitmap.Save(@"C:\data\HousePricesDownload\web\images\"+tileXYZ[2]+"/"+tileXYZ[0]+"/"+tileXYZ[1]+".png");
-
 
 			return count;
 
