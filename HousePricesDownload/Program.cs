@@ -74,15 +74,7 @@ namespace HousePricesDownload {
 
 
 
-			// //houston
-			// latMin = 29.0;
-			// latMax = 30.0;
-			// lngMin = -96.0;
-			// lngMax = -95.0;
-            // sizeMax = 1.0;
-            // sizeMin = 0.1;
-            
-            
+            // //start east
 			// for(double currentLng = lngMax; currentLng >=lngMin; currentLng -= sizeMax) {
 			// 	for(double currentLat = latMax; currentLat >=latMin; currentLat -= sizeMax) {
 			// 		run(currentLat, currentLng, sizeMax, collection, searchCollection);
@@ -90,97 +82,13 @@ namespace HousePricesDownload {
 			// }
 
 
-            // sizeMax = 1.0;
-            // sizeMin = 0.01;
 
-			// for(double currentLng = lngMax; currentLng >=lngMin; currentLng -= sizeMax) {
-			// 	for(double currentLat = latMax; currentLat >=latMin; currentLat -= sizeMax) {
-			// 		run(currentLat, currentLng, sizeMax, collection, searchCollection);
-			// 	}
-			// }
-            // //endhouston
-
-
-
-
-			// //usa
-			// latMin = 20.0;
-			// latMax = 50.0;
-			// lngMin = -130.0;
-			// lngMax = -60.0;  
-            // sizeMax = 10.0;          
-            // sizeMin = 0.01;
-            
-			for(double currentLng = lngMax; currentLng >=lngMin; currentLng -= sizeMax) {
-				for(double currentLat = latMax; currentLat >=latMin; currentLat -= sizeMax) {
+            //start west
+			for(double currentLng = lngMin; currentLng <=lngMax; currentLng += sizeMax) {
+				for(double currentLat = latMin; currentLat <=latMax; currentLat += sizeMax) {
 					run(currentLat, currentLng, sizeMax, collection, searchCollection);
 				}
 			}
-
-
-
-
-
-			//double currentMax,currentMin;
-			//map(i,)
-
-
-
-
-			//						int stepsLng = (int)((lngMax-lngMin)/sizeMax));
-			//for(int i=0;i<stepsLng;i++){
-			//		int proxyIndex = i%proxies.Length;
-			//}
-
-
-
-
-
-
-			//for(int i=proxies.Length;i<((lngMax-lngMin)/sizeMax;i++){}
-
-
-
-
-
-
-			//						Task[] tasks = new Task[proxies.Length];
-
-
-			//						for(int i=0;i<tasks.Length;i++){
-			//								(lngMin+(sizeMax*i)
-
-
-			//								tasks[i] = run
-
-			//			for(double currentLng = lngMax; currentLng >=lngMin; currentLng -= sizeMax) {
-			//				for(double currentLat = latMax; currentLat >=latMin; currentLat -= sizeMax) {
-			//					run(currentLat, currentLng, sizeMax, collection, searchCollection);
-			//				}
-			//			}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-			//}
-
-
-			//for(int i=0;i<tasks.Length;i++){
-			//		tasks[i] = tasks[i].Wait();                
-			//}
-
-
 
 
 
@@ -193,7 +101,7 @@ namespace HousePricesDownload {
 		}
 		void run(double latMin, double lngMin, double size, IMongoCollection<BsonDocument> collection, IMongoCollection<BsonDocument> searchCollection) {
 
-			Console.Write("("+lngMin+","+latMin+")");
+			Console.Write("("+latMin+","+lngMin+")");
 			int nearbyCount;
 			string json = "";
 			//download(json, latMin, lngMin, size, collection, searchCollection);
@@ -330,7 +238,7 @@ namespace HousePricesDownload {
 				listA.Add(values[0]);
 				listB.Add(int.Parse(values[1]));
 
-				Console.Write(values[0]+","+values[1]+",");
+				Console.Write(values[1]+","+values[0]+",");
 			}
 
 			proxies = listA.ToArray();

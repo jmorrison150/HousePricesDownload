@@ -191,6 +191,22 @@ namespace GlobalMapTiles {
             m[1] = my;
             return m;
         }
+        
+        public string latlngToQuadKey(double lat, double lng, int zoom){
+
+            //whole world as pixels
+            double sinLatitude = Math.Sin(lat * Math.PI/180.0);
+            int pixelX = (int) ( ( ( lng + 180.0 ) / 360.0 ) * 256.0 * Math.Pow(2.0, zoom) );
+            int pixelY = (int) ( ( 0.5 - Math.Log(( 1.0 + sinLatitude ) / ( 1.0 - sinLatitude )) / ( 4.0 * Math.PI ) ) * 256.0 * Math.Pow(2.0, zoom) );
+
+            //get whole tiles
+            int tileX = (int) ( Math.Ceiling(pixelX / (double) ( this.tileSize )) - 1 );
+            int tileY = (int) ( Math.Ceiling(pixelY / (double) ( this.tileSize )) - 1 );
+
+            string quad = tileXYToQuadKey(tileX,tileY,zoom);
+            return quad;
+            
+        }
         public int[] latLngToTile(double lat, double lng, int zoom) {
             double level = zoom;
             double latitude = lat;
