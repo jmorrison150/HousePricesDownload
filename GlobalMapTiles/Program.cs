@@ -125,6 +125,8 @@ namespace GlobalMapTiles {
             string pathString = @"C:\data\HousePricesDownload\web\images\"+tileXYZ[2]+"/"+tileXYZ[0]+"/"+tileXYZ[1]+".png";
             bool previous = System.IO.File.Exists(pathString);
 
+            Console.Write(previous.ToString());
+            
             return previous;
         }
 		static async Task<long> queryToBitmap(string quadTree, IMongoCollection<BsonDocument> collection) {
