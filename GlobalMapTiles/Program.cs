@@ -28,16 +28,16 @@ namespace GlobalMapTiles {
 
 			//world
 			//for(int maxZoom=4; maxZoom<=11; maxZoom+=7) {
-                //maxZoom = 9;
-                process("0", collection, maxZoom);
-                process("1", collection, maxZoom);
-                process("2", collection, maxZoom);
-				process("3", collection, maxZoom);
+			//maxZoom = 9;
+			process("0", collection, maxZoom);
+			process("1", collection, maxZoom);
+			process("2", collection, maxZoom);
+			process("3", collection, maxZoom);
 			//}
 
-            cities(collection,maxZoom,12);
-            cities(collection,12,15);
-            cities(collection,15,17);
+			cities(collection, maxZoom, 13);
+			cities(collection, 12, 16);
+			cities(collection, 15, 17);
 
 
 
@@ -48,63 +48,61 @@ namespace GlobalMapTiles {
 
 
 		}
-        void cities(IMongoCollection<BsonDocument> collection, int minZoom,int maxZoom){
-            
+		void cities(IMongoCollection<BsonDocument> collection, int minZoom, int maxZoom) {
+
 			GlobalMercator proj = new GlobalMercator();
-           
-            
-
-            string quadDallas =  proj.latlngToQuadKey(32.7805664,-96.8081442,minZoom);
-            string quadFtWorth = proj.latlngToQuadKey(32.7586487,-97.3324023,minZoom);
-            string quadHouston = proj.latlngToQuadKey(29.758169,-95.3684179,minZoom);
-            string quadLosAngeles = proj.latlngToQuadKey(34.0507041,-118.243092,minZoom);
-            string quadSanFrancisco = proj.latlngToQuadKey(37.7608648,-122.4153602,minZoom);
-            string quadSeattle = proj.latlngToQuadKey(47.6059903,-122.3292994,minZoom);
-            string quadChicago = proj.latlngToQuadKey(41.8814234,-87.6292672,minZoom);
-            string quadAtlanta = proj.latlngToQuadKey(33.7515908,-84.3858375,minZoom);
-            string quadNewYork = proj.latlngToQuadKey(40.7322625,-73.9924373,minZoom);
-            string quadBoston = proj.latlngToQuadKey(42.3742784,-71.1165778,minZoom);
-            string quadDetroit = proj.latlngToQuadKey(42.3314207,-83.0458919,minZoom);
-            string quadAustin = proj.latlngToQuadKey(30.2682476,-97.7417557,minZoom);
-            string quadDC = proj.latlngToQuadKey(38.9073708,-77.0363579,minZoom);
-
-            List<string> quads = new List<string>();
-            quads.Add(quadDallas);
-            quads.Add(quadFtWorth);
-            quads.Add(quadNewYork);
-            quads.Add(quadHouston);
-            quads.Add(quadSanFrancisco);
-            quads.Add(quadLosAngeles);
-            quads.Add(quadBoston);
-            quads.Add(quadAustin);
-            quads.Add(quadAtlanta);
-            quads.Add(quadChicago);
-            quads.Add(quadDC);
-            quads.Add(quadSeattle);
-            quads.Add(quadDetroit);
 
 
 
-            foreach(string quad in quads){
-                process(quad,collection,maxZoom);
-            }
+			string quadDallas =  proj.latlngToQuadKey(32.7805664, -96.8081442, minZoom);
+			string quadFtWorth = proj.latlngToQuadKey(32.7586487, -97.3324023, minZoom);
+			string quadHouston = proj.latlngToQuadKey(29.758169, -95.3684179, minZoom);
+			string quadLosAngeles = proj.latlngToQuadKey(34.0507041, -118.243092, minZoom);
+			string quadSanFrancisco = proj.latlngToQuadKey(37.7608648, -122.4153602, minZoom);
+			string quadSeattle = proj.latlngToQuadKey(47.6059903, -122.3292994, minZoom);
+			string quadChicago = proj.latlngToQuadKey(41.8814234, -87.6292672, minZoom);
+			string quadAtlanta = proj.latlngToQuadKey(33.7515908, -84.3858375, minZoom);
+			string quadNewYork = proj.latlngToQuadKey(40.7322625, -73.9924373, minZoom);
+			string quadBoston = proj.latlngToQuadKey(42.3742784, -71.1165778, minZoom);
+			string quadDetroit = proj.latlngToQuadKey(42.3314207, -83.0458919, minZoom);
+			string quadAustin = proj.latlngToQuadKey(30.2682476, -97.7417557, minZoom);
+			string quadDC = proj.latlngToQuadKey(38.9073708, -77.0363579, minZoom);
 
-            
-            
-        }
+			List<string> quads = new List<string>();
+			quads.Add(quadDallas);
+			quads.Add(quadFtWorth);
+			quads.Add(quadNewYork);
+			quads.Add(quadHouston);
+			quads.Add(quadSanFrancisco);
+			quads.Add(quadLosAngeles);
+			quads.Add(quadBoston);
+			quads.Add(quadAustin);
+			quads.Add(quadAtlanta);
+			quads.Add(quadChicago);
+			quads.Add(quadDC);
+			quads.Add(quadSeattle);
+			quads.Add(quadDetroit);
+
+
+
+			foreach(string quad in quads) {
+				process(quad, collection, maxZoom);
+			}
+
+
+
+		}
 		void process(string quadTree, IMongoCollection<BsonDocument> collection, int maxZoom) {
+			long result = previousBitmap(quadTree);
+			Console.Write(result+",");
+			Console.WriteLine(quadTree);
 
-            bool result = false;
-            if(previousBitmap(quadTree)){
-                result = true;
-            }else{
-                Task<long> tsk = queryToBitmap(quadTree, collection);
-                tsk.Wait();
-            if(tsk.Result>0) {
-                result = true;}
-            }
-            
-            if(result){
+			if(result<0) {
+				Task<long> tsk = queryToBitmap(quadTree, collection);
+				tsk.Wait();
+				result = tsk.Result;
+			}
+			if(result>0) {
 				int zoom = quadTree.Length;
 
 				if(zoom <= maxZoom) {
@@ -116,19 +114,61 @@ namespace GlobalMapTiles {
 			}
 
 		}
-        bool previousBitmap(string quadTree){
+		/// <summary>
+		/// Tests for previous bitmap.  none == -1, blank == 0, full == 1
+		/// </summary>
+		/// <param name="quadTree"></param>
+		/// <returns></returns>
+		int previousBitmap(string quadTree) {
 
-            GlobalMercator projection = new GlobalMercator();
-            int[] tileXYZ = projection.quadKeyToTileXY(quadTree);
-            
+			GlobalMercator projection = new GlobalMercator();
+			int[] tileXYZ = projection.quadKeyToTileXY(quadTree);
+
 			// bitmap.Save(@"C:\data\HousePricesDownload\web\images\"+tileXYZ[2]+"/"+tileXYZ[0]+"/"+tileXYZ[1]+".png");
-            string pathString = @"C:\data\HousePricesDownload\web\images\"+tileXYZ[2]+"/"+tileXYZ[0]+"/"+tileXYZ[1]+".png";
-            bool previous = System.IO.File.Exists(pathString);
+			string pathString = @"C:\data\HousePricesDownload\web\images\"+tileXYZ[2]+"/"+tileXYZ[0]+"/"+tileXYZ[1]+".png";
+			bool previous = System.IO.File.Exists(pathString);
+			if(!previous) { return -1; }
 
-            Console.Write(previous.ToString());
-            
-            return previous;
-        }
+			bool blank = isBlank(pathString);
+			if(blank) { return 0;
+			} else { return 1; }
+		}
+		bool isBlank(string pathString) {
+
+
+			//first get all the bytes
+			Bitmap bitmap = new Bitmap(pathString);
+			System.Drawing.Imaging.BitmapData bmData = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, bitmap.PixelFormat);
+
+			//int stride = bmData.Stride;
+			IntPtr Scan0 = bmData.Scan0;
+			int byteCount = Math.Abs(bmData.Stride)* bitmap.Height;
+			byte[] rgbValues = new byte[byteCount];
+			System.Runtime.InteropServices.Marshal.Copy(Scan0, rgbValues, 0, byteCount);
+			
+			//look at all alphas
+			for(int i = 0; i < rgbValues.Length; i+=4) {
+				if(rgbValues[i]>0) {
+					bitmap.UnlockBits(bmData);
+					return false; }
+			}
+
+			bitmap.UnlockBits(bmData);
+			return true;
+
+		}
+		bool equalsZero(byte b) {
+			//Console.WriteLine(b.ToString()+",");
+			return b==0;
+			//if(b==137 || b==80) { return true; } else { return false; }
+		}
+		// Converting Bitmap to byte array
+		private byte[] convertBitmapToByteArray(Bitmap imageToConvert) {
+			System.IO.MemoryStream ms = new System.IO.MemoryStream();
+			imageToConvert.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+
+			return ms.ToArray();
+		}
 		static async Task<long> queryToBitmap(string quadTree, IMongoCollection<BsonDocument> collection) {
 			GlobalMercator proj = new GlobalMercator();
 			int[] tileXYZ = proj.quadKeyToTileXY(quadTree);
@@ -139,24 +179,24 @@ namespace GlobalMapTiles {
 			double[] bounds = proj.tileLatLngBounds(tileXYZ[0], tileXYZ[1], tileXYZ[2]);
 			FilterDefinitionBuilder<BsonDocument> builder = Builders<BsonDocument>.Filter;
 			FilterDefinition<BsonDocument> filter;
-            filter = builder.Gt("lat", bounds[0]);
+			filter = builder.Gt("lat", bounds[0]);
 			filter = filter & builder.Lt("lat", bounds[1]);
 			filter = filter & builder.Gt("lng", bounds[2]);
 			filter = filter & builder.Lt("lng", bounds[3]);
-            //filter = filter & builder.Exists("nearMin",true);
-            
+			//filter = filter & builder.Exists("nearMin",true);
 
-			count = collection.Find(filter).CountAsync().Result;
-			if(count==0) { return count; }
 
-			if(count>0) {
+			count =  collection.Find(filter).CountAsync().Result;
+			//if(count==0) { return count; }
+
+			//if(count>0) {
 				using(var cursor = await collection.FindAsync(filter)) {
 					while(await cursor.MoveNextAsync()) {
 						var batch = cursor.Current;
-						int current = 0;
+						//int current = 0;
 
 						foreach(var doc in batch) {
-							current++;
+							//current++;
 
 							if(doc["price"].BsonType!=BsonType.Int32) { continue; }
 
@@ -169,7 +209,7 @@ namespace GlobalMapTiles {
 						}
 					}
 				}
-			}
+			//}
 
 
 			////save bitmap
