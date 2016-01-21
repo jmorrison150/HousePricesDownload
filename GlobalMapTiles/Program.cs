@@ -29,15 +29,26 @@ namespace GlobalMapTiles {
 			//world
 			//for(int maxZoom=4; maxZoom<=11; maxZoom+=7) {
 			//maxZoom = 9;
-			process("0", collection, maxZoom);
-			process("1", collection, maxZoom);
-			process("2", collection, maxZoom);
-			process("3", collection, maxZoom);
-			//}
+
+			for(int i = 1; i < maxZoom; i++) {
+				process("0", collection, i);
+				process("1", collection, i);
+				process("2", collection, i);
+				process("3", collection, i);
+			}
 
 			cities(collection, maxZoom, 13);
 			cities(collection, 12, 16);
 			cities(collection, 15, 17);
+
+
+			for(int i = maxZoom; i < 17; i++) {
+				process("0", collection, i);
+				process("1", collection, i);
+				process("2", collection, i);
+				process("3", collection, i);
+			}
+
 
 
 
