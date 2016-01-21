@@ -17,34 +17,42 @@ namespace GlobalMapTiles {
 	class DrawMap {
 		public void initialize() {
 
-			DateTime startTime = DateTime.Now;
-			string now = startTime.ToString("yyyy.MM.dd HH.mm");
-			Console.WriteLine("Started at " + now);
+            DateTime startTime = DateTime.Now;
+            string now = startTime.ToString("yyyy.MM.dd HH.mm");
+            Console.WriteLine("Started at " + now);
 
-			var client = new MongoClient("mongodb://localhost:27017");
-			var database = client.GetDatabase("test");
-			var collection = database.GetCollection<BsonDocument>("prop");
-			int maxZoom = 9;
+            var client = new MongoClient("mongodb://localhost:27017");
+            var database = client.GetDatabase("test");
+            var collection = database.GetCollection<BsonDocument>("prop");
+            int maxZoom = 9;
 
-			//world
-			//for(int maxZoom=4; maxZoom<=11; maxZoom+=7) {
-			//maxZoom = 9;
-			process("0", collection, maxZoom);
-			process("1", collection, maxZoom);
-			process("2", collection, maxZoom);
-			process("3", collection, maxZoom);
-			//}
+            //quick feedback
+            for(int i=1;i<maxZoom;++i){
+                process("0", collection, i);
+                process("1", collection, i);
+                process("2", collection, i);
+                process("3", collection, i);
+            }
 
-			cities(collection, maxZoom, 13);
-			cities(collection, 12, 16);
-			cities(collection, 15, 17);
+            //detailed cities
+            cities(collection, maxZoom, 13);
+            cities(collection, 12, 16);
+            cities(collection, 15, 17);
+
+            //let it run
+            for(int i=maxZoom;i<17;++i){
+                process("0", collection, i);
+                process("1", collection, i);
+                process("2", collection, i);
+                process("3", collection, i);
+            }
 
 
 
-			DateTime endTime = DateTime.Now;
-			TimeSpan elapsedTime = endTime-startTime;
-			Console.WriteLine("elapsedTime = "+elapsedTime);
-			pause();
+            DateTime endTime = DateTime.Now;
+            TimeSpan elapsedTime = endTime-startTime;
+            Console.WriteLine("elapsedTime = "+elapsedTime);
+            pause();
 
 
 		}

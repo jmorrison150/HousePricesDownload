@@ -60,6 +60,13 @@ namespace HousePricesDownload {
 			lngMin = -130.0;
 			lngMax = -60.0;
 
+
+			//midwest
+			latMin = 20.0;
+			latMax = 50.0;
+			lngMin = -100.0;
+			lngMax = -90.0;
+            
 			// //dallas
 			// latMin =  32.4;
 			// lngMin = -97.6;
