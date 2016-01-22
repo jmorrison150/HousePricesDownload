@@ -61,8 +61,14 @@ namespace HousePricesDownload {
 			lngMax = -60.0;
 
 
-			//midwest
-			latMin = 20.0;
+			// //midwest
+			// latMin = 20.0;
+			// latMax = 50.0;
+			// lngMin = -100.0;
+			// lngMax = -90.0;
+            
+            //midwest2
+			latMin = 30.0;
 			latMax = 50.0;
 			lngMin = -100.0;
 			lngMax = -90.0;
@@ -117,11 +123,12 @@ namespace HousePricesDownload {
 			var builder = Builders<BsonDocument>.Filter;
 			FilterDefinition<BsonDocument> filter = builder.Eq("lat", latMin) & builder.Eq("lng", lngMin) & builder.Eq("size", size);
 			Task<long> previousCount = searchCollection.Find(filter).CountAsync();
+            //Task<BsonDocument> searchCollection.Find(filter).ToListAsync();
 			previousCount.Wait();
             //Console.Write(previousCount.Result);
 			if(previousCount.Result==0) {
 				//new download
-//Console.Write("new download");
+                //Console.Write("new download");
 				nearbyCount = download(json, latMin, lngMin, size, collection, searchCollection);
 			} else {
 				Task<BsonDocument> task = searchCollection.Find(filter).FirstAsync();
@@ -153,7 +160,7 @@ namespace HousePricesDownload {
 
 		}
 		int download(string json, double latMin, double lngMin, double size, IMongoCollection<BsonDocument> collection, IMongoCollection<BsonDocument> searchCollection) {
-//Console.Write("downloading");
+            //Console.Write("downloading");
 			//insertSearch(latMin, lngMin, size, -1, -1, searchCollection);
 
 			dynamic data;
