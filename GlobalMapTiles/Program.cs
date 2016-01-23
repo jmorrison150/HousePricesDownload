@@ -57,7 +57,6 @@ namespace GlobalMapTiles {
 			Console.WriteLine("elapsedTime = "+elapsedTime);
 			pause();
 
-
 		}
 		void cities(IMongoCollection<BsonDocument> collection, int minZoom, int maxZoom) {
 
