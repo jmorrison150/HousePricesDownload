@@ -26,10 +26,7 @@ namespace GlobalMapTiles {
 			var collection = database.GetCollection<BsonDocument>("prop");
 			int maxZoom = 9;
 
-			//world
-			//for(int maxZoom=4; maxZoom<=11; maxZoom+=7) {
-			//maxZoom = 9;
-
+			//quick feedback
 			for(int i = 1; i < maxZoom; i++) {
 				process("0", collection, i);
 				process("1", collection, i);
@@ -37,11 +34,12 @@ namespace GlobalMapTiles {
 				process("3", collection, i);
 			}
 
+			//detailed cities
 			cities(collection, maxZoom, 13);
 			cities(collection, 12, 16);
 			cities(collection, 15, 17);
 
-
+			//let it run
 			for(int i = maxZoom; i < 17; i++) {
 				process("0", collection, i);
 				process("1", collection, i);
@@ -140,7 +138,8 @@ namespace GlobalMapTiles {
 			if(!previous) { return -1; }
 
 			bool blank = isBlank(pathString);
-			if(blank) { return 0;
+			if(blank) {
+				return 0;
 			} else { return 1; }
 		}
 		bool isBlank(string pathString) {
@@ -155,12 +154,13 @@ namespace GlobalMapTiles {
 			int byteCount = Math.Abs(bmData.Stride)* bitmap.Height;
 			byte[] rgbValues = new byte[byteCount];
 			System.Runtime.InteropServices.Marshal.Copy(Scan0, rgbValues, 0, byteCount);
-			
+
 			//look at all alphas
 			for(int i = 0; i < rgbValues.Length; i+=4) {
 				if(rgbValues[i]>0) {
 					bitmap.UnlockBits(bmData);
-					return false; }
+					return false;
+				}
 			}
 
 			bitmap.UnlockBits(bmData);
@@ -200,25 +200,25 @@ namespace GlobalMapTiles {
 			//if(count==0) { return count; }
 
 			//if(count>0) {
-				using(var cursor = await collection.FindAsync(filter)) {
-					while(await cursor.MoveNextAsync()) {
-						var batch = cursor.Current;
-						//int current = 0;
+			using(var cursor = await collection.FindAsync(filter)) {
+				while(await cursor.MoveNextAsync()) {
+					var batch = cursor.Current;
+					//int current = 0;
 
-						foreach(var doc in batch) {
-							//current++;
+					foreach(var doc in batch) {
+						//current++;
 
-							if(doc["price"].BsonType!=BsonType.Int32) { continue; }
+						if(doc["price"].BsonType!=BsonType.Int32) { continue; }
 
-							int p = (int) doc["price"].AsInt32;
-							double latitude =(double) doc["lat"].AsDouble;
-							double longitude =(double) doc["lng"].AsDouble;
+						int p = (int) doc["price"].AsInt32;
+						double latitude =(double) doc["lat"].AsDouble;
+						double longitude =(double) doc["lng"].AsDouble;
 
-							Draw.price(p, latitude, longitude, zoom, bitmap);
-							//Draw.near(doc["price"].AsInt32, doc["nearMin"].AsInt32, doc["nearMax"].AsInt32, doc["lat"].AsDouble, doc["lng"].AsDouble, zoom, bitmap);
-						}
+						Draw.price(p, latitude, longitude, zoom, bitmap);
+						//Draw.near(doc["price"].AsInt32, doc["nearMin"].AsInt32, doc["nearMax"].AsInt32, doc["lat"].AsDouble, doc["lng"].AsDouble, zoom, bitmap);
 					}
 				}
+			}
 			//}
 
 

@@ -18,18 +18,20 @@ namespace HousePricesDownload {
 	}
 
 	class MyClass {
-		string[] proxies;
-		int[] ports;
+		//string[] proxies;
+		//int[] ports;
+		Search[] searches;
 		protected static IMongoClient client;
 		protected static IMongoDatabase test;
 		double sizeMax = 10.0;
 		double sizeMin = 0.01;
 		double factor = 10;
-		//double[] factors = new double[4] {10.0, 1.0, 0.1, 0.01};
+		double latMin, latMax, lngMin, lngMax;
+		//double[] factors = new double[5] {10.0, 1.0, 0.1, 0.01, 0.001};
 
 
 		public MyClass() {
-			getProxies(out proxies, out ports);
+			//getProxies(out proxies, out ports);
 		}
 
 
@@ -46,7 +48,35 @@ namespace HousePricesDownload {
 			IMongoCollection<BsonDocument> collection = test.GetCollection<BsonDocument>("prop1");
 			IMongoCollection<BsonDocument> searchCollection = test.GetCollection<BsonDocument>("search");
 
-			double latMin, latMax, lngMin, lngMax;
+			FilterDefinition<BsonDocument> emptyFilter = new BsonDocument();
+			Task<List<BsonDocument>> search = searchCollection.Find(emptyFilter).ToListAsync();
+			search.Wait();
+			searches = new Search[search.Result.Count()];
+			List<Search> s= new List<Search>();
+			for(int i = 0; i < searches.Length; i++) {
+				try {
+					s.Add(new Search(search.Result[i]));
+				} catch {
+					Console.Write(search.Result[i].ToJson());
+				}
+			}
+			searches = s.ToArray();
+
+			//Array.Sort(searches, delegate(Search search1, Search search2) {
+			//	return search1.latMin.CompareTo(search2.latMin);
+			//});
+			//Array.Sort(searches, delegate(Search search1, Search search2) {
+			//	return search1.lngMin.CompareTo(search2.lngMin); 
+			//});
+			//Array.Sort(searches, delegate(Search search1, Search search2) {
+			//							return search1.size.CompareTo(search2.size);
+			//						});
+
+			//Console.Write(search.Status+",");
+			//Console.Write(search.Result.Count()+",");
+			//Console.Write(search.ToString());
+
+
 
 			////world
 			//latMin = -80.0;
@@ -61,18 +91,18 @@ namespace HousePricesDownload {
 			lngMax = -60.0;
 
 
-			// //midwest
-			// latMin = 20.0;
-			// latMax = 50.0;
-			// lngMin = -100.0;
-			// lngMax = -90.0;
-            
-            //midwest2
-			latMin = 30.0;
-			latMax = 50.0;
-			lngMin = -100.0;
-			lngMax = -90.0;
-            
+			////midwest
+			//latMin = 20.0;
+			//latMax = 50.0;
+			//lngMin = -100.0;
+			//lngMax = -90.0;
+
+			//			//midwest2
+			//latMin = 30.0;
+			//latMax = 50.0;
+			//lngMin = -100.0;
+			//lngMax = -90.0;
+
 			// //dallas
 			// latMin =  32.4;
 			// lngMin = -97.6;
@@ -86,22 +116,25 @@ namespace HousePricesDownload {
 			// lngMax = -90.0;
 
 
+			sizeMin = 1.0;
+			east(collection, searchCollection);
 
-            // //start east
-			// for(double currentLng = lngMax; currentLng >=lngMin; currentLng -= sizeMax) {
-			// 	for(double currentLat = latMax; currentLat >=latMin; currentLat -= sizeMax) {
-			// 		run(currentLat, currentLng, sizeMax, collection, searchCollection);
-			// 	}
-			// }
+			sizeMin = 0.1;
+			east(collection, searchCollection);
+
+			sizeMin = 0.01;
+			east(collection, searchCollection);
+
+			//sizeMin = 0.001;
+			//east(collection, searchCollection);
 
 
-
-            //start west
-			for(double currentLng = lngMin; currentLng <=lngMax; currentLng += sizeMax) {
-				for(double currentLat = latMin; currentLat <=latMax; currentLat += sizeMax) {
-					run(currentLat, currentLng, sizeMax, collection, searchCollection);
-				}
-			}
+			////start west
+			//for(double currentLng = lngMin; currentLng <=lngMax; currentLng += sizeMax) {
+			//	for(double currentLat = latMin; currentLat <=latMax; currentLat += sizeMax) {
+			//		run(currentLat, currentLng, sizeMax, collection, searchCollection);
+			//	}
+			//}
 
 
 
@@ -117,35 +150,29 @@ namespace HousePricesDownload {
 			Console.Write("("+latMin+","+lngMin+")");
 			int nearbyCount;
 			string json = "";
-			//download(json, latMin, lngMin, size, collection, searchCollection);
 
 			//test for previous search
-			var builder = Builders<BsonDocument>.Filter;
-			FilterDefinition<BsonDocument> filter = builder.Eq("lat", latMin) & builder.Eq("lng", lngMin) & builder.Eq("size", size);
-			Task<long> previousCount = searchCollection.Find(filter).CountAsync();
-            //Task<BsonDocument> searchCollection.Find(filter).ToListAsync();
-			previousCount.Wait();
-            //Console.Write(previousCount.Result);
-			if(previousCount.Result==0) {
-				//new download
-                //Console.Write("new download");
-				nearbyCount = download(json, latMin, lngMin, size, collection, searchCollection);
-			} else {
-				Task<BsonDocument> task = searchCollection.Find(filter).FirstAsync();
-				BsonDocument previousSearch = task.Result;
-				nearbyCount = previousSearch["count"].AsInt32;
-				if(nearbyCount>=0) {
-					//use old download
-					Console.WriteLine("previousCount= "+nearbyCount.ToString());
-				} else {
-					//retry error
-					FilterDefinition<BsonDocument> delete = previousSearch;
-					searchCollection.DeleteOneAsync(delete);
-                    Console.Write("retry error");
-					nearbyCount = download(json, latMin, lngMin, size, collection, searchCollection);
-				}
-			}
+			//			Task<long> previousCount = searchCollection.Find(filter).CountAsync();
+			//			previousCount.Wait();
+			//Console.Write(previousCount.Result);
+			Search s = previousSearch(latMin, lngMin, size);
 
+
+
+
+			//new download
+			if(s.count<0 || s == null) {
+				var builder = Builders<BsonDocument>.Filter;
+				FilterDefinition<BsonDocument> filter = builder.Eq("size", size) & builder.Eq("lng", lngMin) & builder.Eq("lat", latMin);
+				FilterDefinition<BsonDocument> delete = filter & builder.Lt("count", 0);
+				searchCollection.DeleteManyAsync(delete);
+
+
+				nearbyCount = download(json, latMin, lngMin, size, collection, searchCollection);
+
+			} else {
+				nearbyCount = s.count;
+			}
 
 			//recursive at smaller scale
 			if(( nearbyCount>=900 ) && ( size > sizeMin )) {
@@ -160,7 +187,7 @@ namespace HousePricesDownload {
 
 		}
 		int download(string json, double latMin, double lngMin, double size, IMongoCollection<BsonDocument> collection, IMongoCollection<BsonDocument> searchCollection) {
-            //Console.Write("downloading");
+			//Console.Write("downloading");
 			//insertSearch(latMin, lngMin, size, -1, -1, searchCollection);
 
 			dynamic data;
@@ -209,17 +236,17 @@ namespace HousePricesDownload {
 								numPages = (int) data.list.numPages;
 								try {
 									insertSearch(latMin, lngMin, size, nearbyCount, numPages, searchCollection);
-								} catch { error=5; Console.WriteLine("error= "+error+",");}
-							} catch { error=4; Console.WriteLine("error= "+error+",");}
-						} catch { error=3;Console.WriteLine("error= "+error+","); }
-					} catch { error=2;Console.WriteLine("error= "+error+","); }
+								} catch { error=5; Console.WriteLine("error= "+error+","); }
+							} catch { error=4; Console.WriteLine("error= "+error+","); }
+						} catch { error=3; Console.WriteLine("error= "+error+","); }
+					} catch { error=2; Console.WriteLine("error= "+error+","); }
 				} catch {
 					error=1;
-                    insertSearch(latMin, lngMin, size, -4, -4, searchCollection);
+					insertSearch(latMin, lngMin, size, -4, -4, searchCollection);
 					Console.WriteLine("error= "+error+",");
 					pause();
 				}
-                
+
 				return nearbyCount;
 
 
@@ -297,7 +324,7 @@ namespace HousePricesDownload {
 			//searchCollection.ReplaceOneAsync(index, document);
 			searchCollection.InsertOneAsync(document);
 			//Console.Write("document[\"count\"]= "+document["count"]);
-            Console.WriteLine(document["count"]);
+			Console.WriteLine(document["count"]);
 
 		}
 		private string getJSON(double lat, double lng, double size) {
@@ -376,9 +403,61 @@ namespace HousePricesDownload {
 			return json;
 
 		}
+		void east(IMongoCollection<BsonDocument> collection, IMongoCollection<BsonDocument> searchCollection) {
+
+			//start east
+			for(double currentLng = lngMax; currentLng >=lngMin; currentLng -= sizeMax) {
+				for(double currentLat = latMax; currentLat >=latMin; currentLat -= sizeMax) {
+					run(currentLat, currentLng, sizeMax, collection, searchCollection);
+				}
+			}
+
+
+		}
+		Search previousSearch(double lat, double lng, double size) {
+			Search s = searches.FirstOrDefault(search => ( ( search.latMin == lat ) && ( search.lngMin == lng ) && ( search.size == size ) ));
+			if(s==null) {
+				return new Search(lat, lng, size, -1);
+			}
+			return s;
+
+		}
 		private void pause() {
 			Console.WriteLine("Press Enter to Continue...");
 			Console.ReadKey(false);
 		}
+	}
+
+	class Search {
+		public double latMin;
+		public double lngMin;
+		public double size;
+		public int count;
+
+		public Search(double _lat, double _lng, double _size, int _count) {
+			this.latMin= _lat;
+			this.lngMin = _lng;
+			this.size = _size;
+			this.count = _count;
+
+		}
+		public Search(BsonDocument search) {
+			this.latMin = search["lat"].AsDouble;
+			this.lngMin = search["lng"].AsDouble;
+			this.size = search["size"].AsDouble;
+			this.count = search["count"].AsInt32;
+		}
+
+		public int CompareTo(Search other) {
+
+			int c = 0;
+
+			c = this.size.CompareTo(other.size);
+			if(c==0) { c = this.lngMin.CompareTo(other.lngMin); }
+			if(c==0) { c = this.latMin.CompareTo(other.latMin); }
+			return c;
+
+		}
+
 	}
 }
