@@ -116,14 +116,14 @@ namespace HousePricesDownload {
 			// lngMax = -90.0;
 
 
-			sizeMin = 1.0;
-			east(collection, searchCollection);
+			// sizeMin = 1.0;
+			// east(collection, searchCollection);
 
-			sizeMin = 0.1;
-			east(collection, searchCollection);
+			// sizeMin = 0.1;
+			// east(collection, searchCollection);
 
 			sizeMin = 0.01;
-			east(collection, searchCollection);
+			southwest(collection, searchCollection);
 
 			//sizeMin = 0.001;
 			//east(collection, searchCollection);
@@ -147,7 +147,7 @@ namespace HousePricesDownload {
 		}
 		void run(double latMin, double lngMin, double size, IMongoCollection<BsonDocument> collection, IMongoCollection<BsonDocument> searchCollection) {
 
-			Console.Write("("+latMin+","+lngMin+")");
+			//Console.Write("("+latMin+","+lngMin+")");
 			int nearbyCount;
 			string json = "";
 
@@ -188,6 +188,7 @@ namespace HousePricesDownload {
 		}
 		int download(string json, double latMin, double lngMin, double size, IMongoCollection<BsonDocument> collection, IMongoCollection<BsonDocument> searchCollection) {
 			//Console.Write("downloading");
+            Console.Write("("+latMin+","+lngMin+")");
 			//insertSearch(latMin, lngMin, size, -1, -1, searchCollection);
 
 			dynamic data;
@@ -414,6 +415,28 @@ namespace HousePricesDownload {
 
 
 		}
+        
+        void west(IMongoCollection<BsonDocument> collection, IMongoCollection<BsonDocument> searchCollection) {
+            //start west
+            for(double currentLng = lngMin; currentLng <=lngMax; currentLng += sizeMax) {
+                for(double currentLat = latMin; currentLat <=latMax; currentLat += sizeMax) {
+                    run(currentLat, currentLng, sizeMax, collection, searchCollection);
+                }
+            }
+		}
+
+        void southwest(IMongoCollection<BsonDocument> collection, IMongoCollection<BsonDocument> searchCollection) {
+            //start south
+            for(double currentLat = latMin; currentLat <=latMax; currentLat += sizeMax) {
+                for(double currentLng = lngMin; currentLng <=lngMax; currentLng += sizeMax) {
+                    run(currentLat, currentLng, sizeMax, collection, searchCollection);
+                }
+            }
+		}
+
+
+        
+ 
 		Search previousSearch(double lat, double lng, double size) {
 			Search s = searches.FirstOrDefault(search => ( ( search.latMin == lat ) && ( search.lngMin == lng ) && ( search.size == size ) ));
 			if(s==null) {
