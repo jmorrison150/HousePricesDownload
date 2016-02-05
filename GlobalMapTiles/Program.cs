@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using MongoDB.Driver.Core;
 using System.Drawing;
+using System.Linq;
 
 namespace GlobalMapTiles {
 	class Program {
@@ -179,10 +181,38 @@ namespace GlobalMapTiles {
 
 			return ms.ToArray();
 		}
+        // string[] quadPlusOne(string quad){
+        //     string[] quads = new string[4];
+        //     quads[0] = quad + "0";
+        //     quads[1] = quad + "1";
+        //     quads[2] = quad + "2";
+        //     quads[3] = quad + "3";
+        //     return quads;
+        // }
 		static async Task<long> queryToBitmap(string quadTree, IMongoCollection<BsonDocument> collection) {
             
-            //TODO: query by quadTree
-            //max zoom = 23
+//             // //TODO: query by quadTree
+//             // string queryQuad;
+//             // bool query =queryQuad.StartsWith(quadTree);
+//             // //max zoom = 23
+//             // FilterDefinitionBuilder<BsonDocument> builder1 = Builders<BsonDocument>.Filter;
+// 			// FilterDefinition<BsonDocument> filter1;
+// 			// filter1 = builder1.Eq("quad", quadTree);
+//             // for(int i=quadTree.Length;i<23;++i){
+//             //     filter1 = filter1 & builder1.Eq(quad+0);
+//             // }\
+// MongoDB.Driver.Builders.Filter
+// Query
+// FilterDefinition<BsonDocument> filter2  = new BsonDocument();
+// System.Linq.IQueryable
+// System.Linq.Queryable.AsQueryable<BsonDocument>()
+// Queryable.
+
+//             var query = Query.Matches("quad", new BsonRegularExpression(string.Format("^{0}", quadTree)));
+//             var result = UserConnectionHandler.MongoCollection.Find(query);
+            
+			
+            
             
 			GlobalMercator proj = new GlobalMercator();
 			int[] tileXYZ = proj.quadKeyToTileXY(quadTree);
