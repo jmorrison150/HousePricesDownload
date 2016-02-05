@@ -180,6 +180,10 @@ namespace GlobalMapTiles {
 			return ms.ToArray();
 		}
 		static async Task<long> queryToBitmap(string quadTree, IMongoCollection<BsonDocument> collection) {
+            
+            //TODO: query by quadTree
+            //max zoom = 23
+            
 			GlobalMercator proj = new GlobalMercator();
 			int[] tileXYZ = proj.quadKeyToTileXY(quadTree);
 			System.Drawing.Bitmap bitmap = new System.Drawing.Bitmap(256, 256);

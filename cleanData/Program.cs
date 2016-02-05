@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using MongoDB.Driver.Core;
+//using MongoDB.Driver.Core;
 
 namespace cleanData {
 class Program {
@@ -37,6 +37,7 @@ class Program {
 						double lat = (double) a[i][1].AsInt32 /1000000.0;
 						double lng = (double) a[i][2].AsInt32 /1000000.0;
 						int price = (int) a[i][7][0].AsInt32;
+                        string quad = latlngToQuadKey(lat,lng,23);
 						
 						var update = Builders<BsonDocument>.Update
 							.Set("lat", lat)
@@ -46,9 +47,10 @@ class Program {
 							.Set("bath", a[i][7][2])
 							.Set("sf", a[i][7][3])
 							.Set("type",a[i][7][4])
-							.Set("img",a[i][7][5]);
+							.Set("img",a[i][7][5])
+                            .Set("quad",quad);
 						var options = new UpdateOptions { IsUpsert = true};
-						var result = await cleanData.UpdateOneAsync(filter, update, options);
+						var result = cleanData.UpdateOneAsync(filter, update, options);
 
 						count++;
 					}
@@ -57,7 +59,7 @@ class Program {
 			}
 		}
 	}
-
+    
 public static async Task near(IMongoCollection<BsonDocument> collection) {
 			long count = 0;
 		
@@ -105,7 +107,12 @@ public static async Task near(IMongoCollection<BsonDocument> collection) {
 			}
 }
 		static void Main(string[] args) {
-
+            
+        DateTime startTime = DateTime.Now;
+        string now = startTime.ToString("yyyy.MM.dd HH.mm");
+        Console.WriteLine("Started at " + now);
+            
+            
 		MongoDB.Driver.IMongoClient client = new MongoClient(); // connect to localhost
 		MongoDB.Driver.IMongoDatabase test = client.GetDatabase("test");
 		IMongoCollection<BsonDocument> collection = test.GetCollection<BsonDocument>("prop");
@@ -113,12 +120,75 @@ public static async Task near(IMongoCollection<BsonDocument> collection) {
 
 		Task tsk = insert(collection1, collection);
 		tsk.Wait();
-		
+        
+        Task t = createIndex(collection);
+        t.Wait();
+       // await collection.Indexes.CreateOneAsync(Builders<BsonDocument>.IndexKeys.Ascending(doc => doc["quad"]));
+  
 		// Task calculateNear = near(collection);
 		// calculateNear.Wait();
+
+
+        DateTime endTime = DateTime.Now;
+        TimeSpan elapsedTime = endTime-startTime;
+        Console.WriteLine("elapsedTime = "+elapsedTime);
 
 		Console.WriteLine("Press Enter to Continue...");
 		Console.ReadKey(false);
 		}
-	}
+	
+    
+    
+static async Task createIndex(IMongoCollection<BsonDocument> collection)
+{
+    await collection.Indexes.CreateOneAsync(Builders<BsonDocument>.IndexKeys.Ascending(_ => _["quad"]));
+}
+       
+        
+    public static string latlngToQuadKey(double lat, double lng, int zoom){
+            int tileSize = 256;
+            //whole world as pixels
+            double sinLatitude = Math.Sin(lat * Math.PI/180.0);
+            int pixelX = (int) ( ( ( lng + 180.0 ) / 360.0 ) * 256.0 * Math.Pow(2.0, zoom) );
+            int pixelY = (int) ( ( 0.5 - Math.Log(( 1.0 + sinLatitude ) / ( 1.0 - sinLatitude )) / ( 4.0 * Math.PI ) ) * 256.0 * Math.Pow(2.0, zoom) );
+
+            //get whole tiles
+            int tileX = (int) ( Math.Ceiling(pixelX / (double) ( tileSize )) - 1 );
+            int tileY = (int) ( Math.Ceiling(pixelY / (double) ( tileSize )) - 1 );
+
+            string quad = tileXYToQuadKey(tileX,tileY,zoom);
+            return quad;
+            
+        }
+    private static string tileXYToQuadKey(int tileX, int tileY, int levelOfDetail) {
+            StringBuilder quadKey = new StringBuilder();
+            int[] tile = googleTile(tileX, tileY, levelOfDetail);
+            
+            for(int i = tile[2]; i > 0; i--) {
+                char digit = '0';
+                int mask = 1 << ( i - 1 );
+                if(( tile[0] & mask ) != 0) {
+                    digit++;
+                }
+                if(( tile[1] & mask ) != 0) {
+                    digit++;
+                    digit++;
+                }
+                quadKey.Append(digit);
+            }
+            return quadKey.ToString();
+        }
+    private static int[] googleTile(int tx, int ty, int zoom) {
+            //"Converts TMS tile coordinates to Google Tile coordinates"
+
+            //# coordinate origin is moved from bottom-left to top-left corner of the extent
+            int[] t = new int[3];
+            t[0] = tx;
+            t[1] = (int) ( ( Math.Pow(2, zoom) - 1 ) - ty );
+            t[2] = zoom;
+            return t;
+        }
+    
+    
+    }
 }

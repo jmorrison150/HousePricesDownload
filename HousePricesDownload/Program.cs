@@ -116,6 +116,12 @@ namespace HousePricesDownload {
 			// lngMax = -90.0;
 
 
+			//south
+			latMin = 30.0;
+			latMax = 50.0;
+			lngMin = -130.0;
+			lngMax = -60.0;
+
 			// sizeMin = 1.0;
 			// east(collection, searchCollection);
 
