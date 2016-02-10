@@ -50,7 +50,7 @@ class Program {
 							.Set("img",a[i][7][5])
                             .Set("quad",quad);
 						var options = new UpdateOptions { IsUpsert = true};
-						var result = cleanData.UpdateOneAsync(filter, update, options);
+						var result = await cleanData.UpdateOneAsync(filter, update, options);
 
 						count++;
 					}
@@ -119,6 +119,7 @@ public static async Task near(IMongoCollection<BsonDocument> collection) {
 		IMongoCollection<BsonDocument> collection1 = test.GetCollection<BsonDocument>("prop1");
 
 		Task tsk = insert(collection1, collection);
+        //tsk.ConfigureAwait(true);
 		tsk.Wait();
         
         Task t = createIndex(collection);

@@ -116,11 +116,11 @@ namespace HousePricesDownload {
 			// lngMax = -90.0;
 
 
-			//south
-			latMin = 30.0;
-			latMax = 50.0;
-			lngMin = -130.0;
-			lngMax = -60.0;
+			// //south
+			// latMin = 30.0;
+			// latMax = 50.0;
+			// lngMin = -130.0;
+			// lngMax = -60.0;
 
 			// sizeMin = 1.0;
 			// east(collection, searchCollection);
@@ -128,7 +128,7 @@ namespace HousePricesDownload {
 			// sizeMin = 0.1;
 			// east(collection, searchCollection);
 
-			sizeMin = 0.01;
+			sizeMin = 0.001;
 			southwest(collection, searchCollection);
 
 			//sizeMin = 0.001;
@@ -435,6 +435,7 @@ namespace HousePricesDownload {
             //start south
             for(double currentLat = latMin; currentLat <=latMax; currentLat += sizeMax) {
                 for(double currentLng = lngMin; currentLng <=lngMax; currentLng += sizeMax) {
+                    Console.Write("("+latMin+","+lngMin+")");
                     run(currentLat, currentLng, sizeMax, collection, searchCollection);
                 }
             }

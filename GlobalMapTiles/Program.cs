@@ -28,6 +28,17 @@ namespace GlobalMapTiles {
 			var collection = database.GetCollection<BsonDocument>("prop");
 			int maxZoom = 9;
 
+            //detailed dfw
+            dfw(collection,17,21);
+            dfw(collection,15,20);
+            dfw(collection,13,19);
+            dfw(collection,11,17);
+            dfw(collection,9,17);
+            dfw(collection,9,18);
+            dfw(collection,9,19);
+            dfw(collection,9,20);
+            dfw(collection,9,21);
+            
 			//quick feedback
 			for(int i = 1; i < maxZoom; i++) {
 				process("0", collection, i);
@@ -56,6 +67,28 @@ namespace GlobalMapTiles {
 			TimeSpan elapsedTime = endTime-startTime;
 			Console.WriteLine("elapsedTime = "+elapsedTime);
 			pause();
+
+		}
+        
+        void dfw(IMongoCollection<BsonDocument> collection, int minZoom, int maxZoom) {
+
+			GlobalMercator proj = new GlobalMercator();
+
+
+
+			string quadDallas =  proj.latlngToQuadKey(32.7805664, -96.8081442, minZoom);
+			string quadFtWorth = proj.latlngToQuadKey(32.7586487, -97.3324023, minZoom);
+			
+			List<string> quads = new List<string>();
+			quads.Add(quadDallas);
+			quads.Add(quadFtWorth);
+		
+
+			foreach(string quad in quads) {
+				process(quad, collection, maxZoom);
+			}
+
+
 
 		}
 		void cities(IMongoCollection<BsonDocument> collection, int minZoom, int maxZoom) {
