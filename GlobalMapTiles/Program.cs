@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.Core;
+using MongoDB.Driver.Linq;
 using System.Drawing;
 using System.Linq;
 
@@ -228,23 +229,8 @@ namespace GlobalMapTiles {
 //             // string queryQuad;
 //             // bool query =queryQuad.StartsWith(quadTree);
 //             // //max zoom = 23
-//             // FilterDefinitionBuilder<BsonDocument> builder1 = Builders<BsonDocument>.Filter;
-// 			// FilterDefinition<BsonDocument> filter1;
-// 			// filter1 = builder1.Eq("quad", quadTree);
-//             // for(int i=quadTree.Length;i<23;++i){
-//             //     filter1 = filter1 & builder1.Eq(quad+0);
-//             // }\
-// MongoDB.Driver.Builders.Filter
-// Query
-// FilterDefinition<BsonDocument> filter2  = new BsonDocument();
-// System.Linq.IQueryable
-// System.Linq.Queryable.AsQueryable<BsonDocument>()
-// Queryable.
-
 //             var query = Query.Matches("quad", new BsonRegularExpression(string.Format("^{0}", quadTree)));
 //             var result = UserConnectionHandler.MongoCollection.Find(query);
-            
-			
             
             
 			GlobalMercator proj = new GlobalMercator();
@@ -253,40 +239,60 @@ namespace GlobalMapTiles {
 			long count = 0;
 			int zoom = quadTree.Length;
 
-			double[] bounds = proj.tileLatLngBounds(tileXYZ[0], tileXYZ[1], tileXYZ[2]);
-			FilterDefinitionBuilder<BsonDocument> builder = Builders<BsonDocument>.Filter;
-			FilterDefinition<BsonDocument> filter;
-			filter = builder.Gt("lat", bounds[0]);
-			filter = filter & builder.Lt("lat", bounds[1]);
-			filter = filter & builder.Gt("lng", bounds[2]);
-			filter = filter & builder.Lt("lng", bounds[3]);
-			//filter = filter & builder.Exists("nearMin",true);
 
 
-			count =  collection.Find(filter).CountAsync().Result;
-			//if(count==0) { return count; }
 
-			//if(count>0) {
-			using(var cursor = await collection.FindAsync(filter)) {
-				while(await cursor.MoveNextAsync()) {
-					var batch = cursor.Current;
-					//int current = 0;
+			IMongoQueryable<BsonDocument> quadRecords = collection.AsQueryable().Where(b => ( b["quad"].AsString ).StartsWith(quadTree));
+			//collection.AsQueryable().Where(b => b["quad"].AsBsonValue);
 
-					foreach(var doc in batch) {
-						//current++;
 
-						if(doc["price"].BsonType!=BsonType.Int32) { continue; }
+			foreach(BsonDocument doc in quadRecords) {
 
-						int p = (int) doc["price"].AsInt32;
-						double latitude =(double) doc["lat"].AsDouble;
-						double longitude =(double) doc["lng"].AsDouble;
+				if(doc["price"].BsonType!=BsonType.Int32) { continue; }
 
-						Draw.price(p, latitude, longitude, zoom, bitmap);
-						//Draw.near(doc["price"].AsInt32, doc["nearMin"].AsInt32, doc["nearMax"].AsInt32, doc["lat"].AsDouble, doc["lng"].AsDouble, zoom, bitmap);
-					}
-				}
+				int p = (int) doc["price"].AsInt32;
+				double latitude =(double) doc["lat"].AsDouble;
+				double longitude =(double) doc["lng"].AsDouble;
+
+				Draw.price(p, latitude, longitude, zoom, bitmap);
+
+
 			}
+
+			//double[] bounds = proj.tileLatLngBounds(tileXYZ[0], tileXYZ[1], tileXYZ[2]);
+			//FilterDefinitionBuilder<BsonDocument> builder = Builders<BsonDocument>.Filter;
+			//FilterDefinition<BsonDocument> filter;
+			//filter = builder.Gt("lat", bounds[0]);
+			//filter = filter & builder.Lt("lat", bounds[1]);
+			//filter = filter & builder.Gt("lng", bounds[2]);
+			//filter = filter & builder.Lt("lng", bounds[3]);
+			////filter = filter & builder.Exists("nearMin",true);
+
+
+			//count =  collection.Find(filter).CountAsync().Result;
+			////if(count==0) { return count; }
+
+			////if(count>0) {
+			//using(var cursor = await collection.FindAsync(filter)) {
+			//	while(await cursor.MoveNextAsync()) {
+			//		var batch = cursor.Current;
+			//		//int current = 0;
+
+			//		foreach(var doc in batch) {
+			//			//current++;
+
+			//			if(doc["price"].BsonType!=BsonType.Int32) { continue; }
+
+			//			int p = (int) doc["price"].AsInt32;
+			//			double latitude =(double) doc["lat"].AsDouble;
+			//			double longitude =(double) doc["lng"].AsDouble;
+
+			//			Draw.price(p, latitude, longitude, zoom, bitmap);
+			//			//Draw.near(doc["price"].AsInt32, doc["nearMin"].AsInt32, doc["nearMax"].AsInt32, doc["lat"].AsDouble, doc["lng"].AsDouble, zoom, bitmap);
+			//		}
+			//	}
 			//}
+			////}
 
 
 			////save bitmap
