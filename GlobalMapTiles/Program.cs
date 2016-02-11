@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using MongoDB.Driver.Core;
+//using MongoDB.Driver.Core;
 using MongoDB.Driver.Linq;
 using System.Drawing;
 using System.Linq;
+
 
 namespace GlobalMapTiles {
 	class Program {
@@ -229,7 +230,8 @@ namespace GlobalMapTiles {
 //             // string queryQuad;
 //             // bool query =queryQuad.StartsWith(quadTree);
 //             // //max zoom = 23
-//             var query = Query.Matches("quad", new BsonRegularExpression(string.Format("^{0}", quadTree)));
+ //MongoDB.Driver.Legacy.dll Version 2.2.0
+ 
 //             var result = UserConnectionHandler.MongoCollection.Find(query);
             
             
@@ -242,11 +244,29 @@ namespace GlobalMapTiles {
 
 
 
-			IMongoQueryable<BsonDocument> quadRecords = collection.AsQueryable().Where(b => ( b["quad"].AsString ).StartsWith(quadTree));
+			//IMongoQueryable<BsonDocument> quadRecords = collection.AsQueryable().Where(b => ( b["quad"].AsString ).StartsWith(quadTree));
+             var query = MongoDB.Driver.Builders.Query.Matches("quad", new BsonRegularExpression(string.Format("^{0}", quadTree)));
+             var results = collection.FindAs(BsonDocument,query);
+            //MongoDB.Driver.Legacy.dll Version 2.2.0
+            //MongoDB.Driver.Builders.Query
+            
+            
 			//collection.AsQueryable().Where(b => b["quad"].AsBsonValue);
+//             var query =
+//     from c in collection.AsQueryable<C>()
+//     where c.S.StartsWith("abc")
+//     select c;
+// // or
+// var query =
+//     collection.AsQueryable<C>()
+//     .Where(c => c.S.StartsWith("abc"));
+// This is translated to the following MongoDB query (using regular expressions):
+
+// { S : /^abc/ }
+//collection.AsQueryable<BsonDocument>().Where(c => c["quad"])
 
 
-			foreach(BsonDocument doc in quadRecords) {
+			foreach(BsonDocument doc in query) {
 
 				if(doc["price"].BsonType!=BsonType.Int32) { continue; }
 
