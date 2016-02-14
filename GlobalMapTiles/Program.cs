@@ -143,7 +143,8 @@ namespace GlobalMapTiles {
 			Console.WriteLine(quadTree);
 
 			if(result<0) {
-				Task<long> tsk = queryToBitmap(quadTree, collection);
+				//TOGGLE
+				Task<long> tsk = queryToBitmap1(quadTree, collection);
 				tsk.Wait();
 				result = tsk.Result;
 			}
@@ -233,7 +234,7 @@ namespace GlobalMapTiles {
 			//filter = filter & builder.Exists("nearMin",true);
 
 
-			count =  collection.Find(filter).CountAsync().Result;
+			//count =  collection.Find(filter).CountAsync().Result;
 			//if(count==0) { return count; }
 
 			//if(count>0) {
@@ -290,11 +291,17 @@ namespace GlobalMapTiles {
 			//IMongoQueryable<BsonDocument> quadRecords = collection.AsQueryable().Where(b => ( b["quad"].AsString ).StartsWith(quadTree));
 
              var builder = Builders<BsonDocument>.Filter;
-             Console.Write(string.Format("^/{0}/", quadTree));
-             var filter = Builders<BsonDocument>.Filter.Regex("quad",new BsonRegularExpression(string.Format("^/{0}/", quadTree)));
-             Console.Write("---");
+//Console.Write(string.Format("^{0}", quadTree));
+			var regex = new BsonRegularExpression(string.Format("^{0}", quadTree));
+//Console.Write(regex.ToString());             
+			var filter = Builders<BsonDocument>.Filter.Regex("quad",regex);
+//Console.Write("---");
              var result = await collection.Find(filter).ToListAsync();
-             Console.Write(result);
+						 long count1 =  collection.Find(filter).CountAsync().Result;
+//Console.Write(count1);
+//Console.Write(result);
+//Console.WriteLine("Press Enter to Continue...");
+//Console.ReadKey(false);
  					foreach(var doc in result) {
 						if(doc["price"].BsonType!=BsonType.Int32) { continue; }
 						int p = (int) doc["price"].AsInt32;

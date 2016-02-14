@@ -10,6 +10,8 @@ rem "C:\Program Files\MongoDB\Server\3.2\bin\mongo.exe"
 
 
 
+
+
 rem download
 rem "C:\Program Files (x86)\MSBuild\12.0\Bin\MSBuild.exe" "C:\data\HousePricesDownload\HousePricesDownload\HousePricesDownload.csproj"
 rem "C:\data\HousePricesDownload\HousePricesDownload\bin\Debug\HousePricesDownload.exe"
@@ -17,6 +19,8 @@ rem "C:\data\HousePricesDownload\HousePricesDownload\bin\Debug\HousePricesDownlo
 rem cleanData
 rem "C:\Program Files (x86)\MSBuild\12.0\Bin\MSBuild.exe" "C:\data\HousePricesDownload\cleandata\cleanData.csproj"
 rem "C:\data\HousePricesDownload\cleanData\bin\Debug\cleanData.exe"
+rem db.prop.createIndex( { quad: 1 } )
+
 
 rem tile
 rem "C:\Program Files (x86)\MSBuild\12.0\Bin\MSBuild.exe" "C:\data\HousePricesDownload\globalmaptiles\GlobalMapTiles.csproj"
