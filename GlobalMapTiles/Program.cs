@@ -144,7 +144,7 @@ namespace GlobalMapTiles {
 
 			if(result<0) {
 				//TOGGLE
-				Task<long> tsk = queryToBitmap1(quadTree, collection);
+				Task<long> tsk = queryToBitmap2(quadTree, collection);
 				tsk.Wait();
 				result = tsk.Result;
 			}
@@ -217,7 +217,7 @@ namespace GlobalMapTiles {
 
 			return ms.ToArray();
 		}
-    static async Task<long> queryToBitmap(string quadTree, IMongoCollection<BsonDocument> collection) {
+    static async Task<long> queryToBitmap0(string quadTree, IMongoCollection<BsonDocument> collection) {
 			GlobalMercator proj = new GlobalMercator();
 			int[] tileXYZ = proj.quadKeyToTileXY(quadTree);
 			System.Drawing.Bitmap bitmap = new System.Drawing.Bitmap(256, 256);
@@ -269,12 +269,10 @@ namespace GlobalMapTiles {
 
 		}
         
-        
-        
 		static async Task<long> queryToBitmap1(string quadTree, IMongoCollection<BsonDocument> collection) {
-            
- 
-            
+
+
+
 			GlobalMercator proj = new GlobalMercator();
 			int[] tileXYZ = proj.quadKeyToTileXY(quadTree);
 			System.Drawing.Bitmap bitmap = new System.Drawing.Bitmap(256, 256);
@@ -282,34 +280,18 @@ namespace GlobalMapTiles {
 			int zoom = quadTree.Length;
 
 
-
-//             // //TODO: query by quadTree
-//             // string queryQuad;
-//             // bool query =queryQuad.StartsWith(quadTree);
-//             // //max zoom = 23
-//MongoDB.Driver.Legacy.dll Version 2.2.0
-			//IMongoQueryable<BsonDocument> quadRecords = collection.AsQueryable().Where(b => ( b["quad"].AsString ).StartsWith(quadTree));
-
-             var builder = Builders<BsonDocument>.Filter;
-//Console.Write(string.Format("^{0}", quadTree));
+			var builder = Builders<BsonDocument>.Filter;
 			var regex = new BsonRegularExpression(string.Format("^{0}", quadTree));
-//Console.Write(regex.ToString());             
-			var filter = Builders<BsonDocument>.Filter.Regex("quad",regex);
-//Console.Write("---");
-             var result = await collection.Find(filter).ToListAsync();
-						 long count1 =  collection.Find(filter).CountAsync().Result;
-//Console.Write(count1);
-//Console.Write(result);
-//Console.WriteLine("Press Enter to Continue...");
-//Console.ReadKey(false);
- 					foreach(var doc in result) {
-						if(doc["price"].BsonType!=BsonType.Int32) { continue; }
-						int p = (int) doc["price"].AsInt32;
-						double latitude =(double) doc["lat"].AsDouble;
-						double longitude =(double) doc["lng"].AsDouble;
-						Draw.price(p, latitude, longitude, zoom, bitmap);
-						//Draw.near(doc["price"].AsInt32, doc["nearMin"].AsInt32, doc["nearMax"].AsInt32, doc["lat"].AsDouble, doc["lng"].AsDouble, zoom, bitmap);
-					}
+			var filter = Builders<BsonDocument>.Filter.Regex("quad", regex);
+			var result = await collection.Find(filter).ToListAsync();
+			foreach(var doc in result) {
+				if(doc["price"].BsonType!=BsonType.Int32) { continue; }
+				int p = (int) doc["price"].AsInt32;
+				double latitude =(double) doc["lat"].AsDouble;
+				double longitude =(double) doc["lng"].AsDouble;
+				Draw.price(p, latitude, longitude, zoom, bitmap);
+				//Draw.near(doc["price"].AsInt32, doc["nearMin"].AsInt32, doc["nearMax"].AsInt32, doc["lat"].AsDouble, doc["lng"].AsDouble, zoom, bitmap);
+			}
 		
 
 			////save bitmap
@@ -320,7 +302,47 @@ namespace GlobalMapTiles {
 			return count;
 
 		}
-        
+
+		static async Task<long> queryToBitmap2(string quadTree, IMongoCollection<BsonDocument> collection) {
+
+			GlobalMercator proj = new GlobalMercator();
+			int[] tileXYZ = proj.quadKeyToTileXY(quadTree);
+			System.Drawing.Bitmap bitmap = new System.Drawing.Bitmap(256, 256);
+			long count = 0;
+			int zoom = quadTree.Length;
+
+			var builder = Builders<BsonDocument>.Filter;
+			var regex = new BsonRegularExpression(string.Format("^{0}", quadTree));
+			var filter = Builders<BsonDocument>.Filter.Regex("quad", regex);
+
+			//var result = await collection.Find(filter).ToListAsync();
+			using(var cursor = await collection.FindAsync(filter)) {
+				while(await cursor.MoveNextAsync()) {
+					var batch = cursor.Current;
+					foreach(var doc in batch) {
+						if(doc["price"].BsonType!=BsonType.Int32) { continue; }
+
+						int p = (int) doc["price"].AsInt32;
+						double latitude =(double) doc["lat"].AsDouble;
+						double longitude =(double) doc["lng"].AsDouble;
+
+						Draw.price(p, latitude, longitude, zoom, bitmap);
+						//Draw.near(doc["price"].AsInt32, doc["nearMin"].AsInt32, doc["nearMax"].AsInt32, doc["lat"].AsDouble, doc["lng"].AsDouble, zoom, bitmap);
+					}
+				}
+			}
+
+
+			////save bitmap
+			string pathString = @"C:\data\HousePricesDownload\web\images\"+tileXYZ[2]+"/"+tileXYZ[0]+"/";
+			System.IO.Directory.CreateDirectory(pathString);
+			bitmap.Save(@"C:\data\HousePricesDownload\web\images\"+tileXYZ[2]+"/"+tileXYZ[0]+"/"+tileXYZ[1]+".png");
+
+			return count;
+
+		}
+     
+	
 		string[] getChildrenTiles(string quadTree) {
 			string[] children = new string[4];
 			children[0] = quadTree+"0";
