@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Net;
 using System.IO;
@@ -24,7 +23,7 @@ namespace HousePricesDownload {
 		protected static IMongoClient client;
 		protected static IMongoDatabase test;
 		double sizeMax = 10.0;
-		double sizeMin = 0.01;
+		double sizeMin = 0.001;
 		double factor = 10;
 		double latMin, latMax, lngMin, lngMax;
 		//double[] factors = new double[5] {10.0, 1.0, 0.1, 0.01, 0.001};
@@ -44,7 +43,7 @@ namespace HousePricesDownload {
 
 
 			client = new MongoClient();
-			test = client.GetDatabase("test");
+			test = client.GetDatabase("prop2");
 			IMongoCollection<BsonDocument> collection = test.GetCollection<BsonDocument>("prop1");
 			IMongoCollection<BsonDocument> searchCollection = test.GetCollection<BsonDocument>("search");
 
@@ -128,7 +127,7 @@ namespace HousePricesDownload {
 			// sizeMin = 0.1;
 			// east(collection, searchCollection);
 
-			sizeMin = 0.001;
+			//sizeMin = 0.001;
 			southwest(collection, searchCollection);
 
 			//sizeMin = 0.001;
@@ -435,7 +434,7 @@ namespace HousePricesDownload {
             //start south
             for(double currentLat = latMin; currentLat <=latMax; currentLat += sizeMax) {
                 for(double currentLng = lngMin; currentLng <=lngMax; currentLng += sizeMax) {
-                    Console.Write("("+latMin+","+lngMin+")");
+                    Console.Write("("+currentLat+","+currentLng+")");
                     run(currentLat, currentLng, sizeMax, collection, searchCollection);
                 }
             }

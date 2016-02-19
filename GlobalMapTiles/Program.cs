@@ -31,23 +31,22 @@ namespace GlobalMapTiles {
 			int maxZoom = 9;
 
             //detailed dfw
-            dfw(collection,17,21);
-            dfw(collection,15,20);
-            dfw(collection,13,19);
-            dfw(collection,11,17);
-            dfw(collection,9,17);
-            dfw(collection,9,18);
             dfw(collection,9,19);
-            dfw(collection,9,20);
-            dfw(collection,9,21);
+
             
-			//quick feedback
-			for(int i = 1; i < maxZoom; i++) {
-				process("0", collection, i);
-				process("1", collection, i);
-				process("2", collection, i);
-				process("3", collection, i);
-			}
+            process("0", collection, 9);
+            process("1", collection, 9);
+            process("2", collection, 9);
+            process("3", collection, 9);
+            
+            
+			// //quick feedback
+			// for(int i = 1; i < maxZoom; i++) {
+			// 	process("0", collection, i);
+			// 	process("1", collection, i);
+			// 	process("2", collection, i);
+			// 	process("3", collection, i);
+			// }
 
 			//detailed cities
 			cities(collection, maxZoom, 13);
@@ -151,7 +150,7 @@ namespace GlobalMapTiles {
 			if(result>0) {
 				int zoom = quadTree.Length;
 
-				if(zoom <= maxZoom) {
+				if(zoom < maxZoom) {
 					string[] childrenTiles = getChildrenTiles(quadTree);
 					foreach(string child in childrenTiles) {
 						process(child, collection, maxZoom);

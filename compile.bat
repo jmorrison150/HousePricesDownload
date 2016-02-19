@@ -30,3 +30,4 @@ rem db.prop.find({nearMin:{$exists:true}}).count()
 rem db.search.aggregate([{$group:{_id:null,total:{$sum:"$count"}}}])
 rem db.search.find({size:{$eq:0.01},count:{$gte:900}).count()
 rem "C:\Program Files\MongoDB\Server\3.2\bin\mongoexport" -d test -c prop | "C:\Program Files\MongoDB\Server\3.2\bin\mongoimport" -d p -c prop --drop
+rem "C:\Program Files\MongoDB\Server\3.2\bin\mongoexport" -d test -c search | "C:\Program Files\MongoDB\Server\3.2\bin\mongoimport" -d prop2 -c search --drop
