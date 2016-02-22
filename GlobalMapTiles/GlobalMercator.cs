@@ -191,7 +191,6 @@ namespace GlobalMapTiles {
             m[1] = my;
             return m;
         }
-        
         public string latlngToQuadKey(double lat, double lng, int zoom){
 
             //whole world as pixels
@@ -367,7 +366,6 @@ namespace GlobalMapTiles {
             t[2] = zoom;
             return t;
         }
-        
         public string quadTree(int tx, int ty, int zoom) {
             //"Converts TMS tile coordinates to Microsoft QuadTree"
 
