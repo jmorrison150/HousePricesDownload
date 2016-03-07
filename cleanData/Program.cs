@@ -19,7 +19,7 @@ class Program {
 
 
 		MongoDB.Driver.IMongoClient client = new MongoClient(); // connect to localhost
-		MongoDB.Driver.IMongoDatabase test = client.GetDatabase("test");
+		MongoDB.Driver.IMongoDatabase test = client.GetDatabase("prop2");
 		IMongoCollection<BsonDocument> collection = test.GetCollection<BsonDocument>("prop");
 		IMongoCollection<BsonDocument> collection1 = test.GetCollection<BsonDocument>("prop1");
 

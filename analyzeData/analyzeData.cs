@@ -11,8 +11,10 @@ using MathNet.Numerics;
 namespace Data {
 	class analyzeData {
 		public void run() {
-
-			MongoDB.Driver.IMongoClient client = new MongoClient(); // connect to localhost
+			int dbToggle = 1;
+			//prop2
+			if(dbToggle==0){
+				MongoDB.Driver.IMongoClient client = new MongoClient(); // connect to localhost
 			MongoDB.Driver.IMongoDatabase prop2 = client.GetDatabase("prop2");
 			IMongoCollection<BsonDocument> prop2Collection = prop2.GetCollection<BsonDocument>("prop2");
 			MongoDB.Driver.IMongoDatabase p = client.GetDatabase("p");
@@ -23,6 +25,26 @@ namespace Data {
 
 			//Task t = createIndex(pCollection);
 			//t.Wait();
+			}
+
+			//test db
+			if(dbToggle==1) {
+				MongoDB.Driver.IMongoClient client = new MongoClient(); // connect to localhost
+				MongoDB.Driver.IMongoDatabase prop2 = client.GetDatabase("test");
+				IMongoCollection<BsonDocument> prop2Collection = prop2.GetCollection<BsonDocument>("prop1");
+				MongoDB.Driver.IMongoDatabase p = client.GetDatabase("p");
+				IMongoCollection<BsonDocument> pCollection = p.GetCollection<BsonDocument>("p");
+
+				Task tsk = insertDFW_geoJSON(prop2Collection, pCollection);
+				tsk.Wait();
+
+				Task t = createIndex(pCollection);
+				t.Wait();
+			}
+
+			
+
+
 		}
 		static async Task insertAll(IMongoCollection<BsonDocument> rawData, IMongoCollection<BsonDocument> cleanData) {
 			GlobalMapTiles.GlobalMercator proj = new GlobalMapTiles.GlobalMercator();
@@ -125,13 +147,18 @@ namespace Data {
 							double lng = (double) a[i][2].AsInt32 /1000000.0;
 
 							bool contained = false;
+							//Console.WriteLine("bounds.Length = "+bounds.Length);
 							for(int j = 0; j < bounds.Length; j++) {
+								//Console.WriteLine("bounds[j][0] = "+bounds[j][0]);
+								//Console.WriteLine("bounds[j][1] = "+bounds[j][1]);
+								//Console.WriteLine("bounds[j][2] = "+bounds[j][2]);
+								//Console.WriteLine("bounds[j][3] = "+bounds[j][3]);
 
-								if(bounds[i][0] < lat && lat < bounds[i][1] && bounds[i][2] < lng && lng < bounds[i][3]) {
+								if(bounds[j][0] < lat && lat < bounds[j][1] && bounds[j][2] < lng && lng < bounds[j][3]) {
 									contained = true;
 								}
-
 							}
+
 							if(contained) {
 
 								int price = (int) a[i][7][0].AsInt32;
@@ -150,15 +177,15 @@ namespace Data {
 
 								var update = Builders<BsonDocument>.Update
 									.Set("loc",geoJson)
-									//.Set("lat", lat)
-									//.Set("lng", lng)
+									.Set("lat", lat)
+									.Set("lng", lng)
 									.Set("price", price)
 									.Set("bed", a[i][7][1])
 									.Set("bath", a[i][7][2])
 									.Set("sf", a[i][7][3])
 									.Set("type", a[i][7][4])
 									.Set("img", a[i][7][5])
-									//.Set("quad", quad)
+									.Set("quad", quad)
 									;
 								var options = new UpdateOptions { IsUpsert = true };
 								var result = await cleanData.UpdateOneAsync(filterID, update, options);
