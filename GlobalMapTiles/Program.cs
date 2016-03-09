@@ -22,6 +22,7 @@ namespace GlobalMapTiles {
 		//string dirType = "sf";
 		string dirType = "pricepersf";
 		//string dirType = @"HousePricesDownload\web";
+        //string dirType = "land";
 		public void initialize() {
 
 			DateTime startTime = DateTime.Now;
@@ -231,6 +232,8 @@ namespace GlobalMapTiles {
 					return await queryToBitmap2(quadTree, collection);
 				case "pricepersf":
 					return await queryPricePerSF(quadTree, collection);
+                case "land":
+                    return await queryLand(quadTree,collection);
 				default:
 					return 0;
 			}
@@ -402,7 +405,7 @@ namespace GlobalMapTiles {
 			return count;
 
 		}
-		static async Task<long> queryPricePerSF(string quadTree, IMongoCollection<BsonDocument> collection) {
+        		static async Task<long> queryPricePerSF(string quadTree, IMongoCollection<BsonDocument> collection) {
 			//filters for square footage
 			string dirType = "pricepersf";
 			GlobalMercator proj = new GlobalMercator();
@@ -431,6 +434,51 @@ namespace GlobalMapTiles {
 
 						//Draw.price(ppsf, latitude, longitude, zoom, bitmap);
 						Draw.near(ppsf, 50, 250, latitude,longitude,zoom, bitmap);
+						//Draw.near(doc["price"].AsInt32, doc["nearMin"].AsInt32, doc["nearMax"].AsInt32, doc["lat"].AsDouble, doc["lng"].AsDouble, zoom, bitmap);
+					}
+				}
+			}
+
+
+			////save bitmap
+			string pathString = @"C:\data\"+dirType+@"\images\"+tileXYZ[2]+"/"+tileXYZ[0]+"/";
+			System.IO.Directory.CreateDirectory(pathString);
+			bitmap.Save(@"C:\data\"+dirType+@"\images\"+tileXYZ[2]+"/"+tileXYZ[0]+"/"+tileXYZ[1]+".png");
+
+			return count;
+
+		}
+		static async Task<long> queryLand(string quadTree, IMongoCollection<BsonDocument> collection) {
+			//filters for square footage
+			string dirType = "land";
+			GlobalMercator proj = new GlobalMercator();
+			int[] tileXYZ = proj.quadKeyToTileXY(quadTree);
+			System.Drawing.Bitmap bitmap = new System.Drawing.Bitmap(256, 256);
+			long count = 0;
+			int zoom = quadTree.Length;
+
+			var builder = Builders<BsonDocument>.Filter;
+			var regex = new BsonRegularExpression(string.Format("^{0}", quadTree));
+			var filter = Builders<BsonDocument>.Filter.Regex("quad", regex);
+			var filterGt = Builders<BsonDocument>.Filter.Gt("sf",0);
+            filter = filter & builder.Not(filterGt);
+
+
+			using(var cursor = await collection.FindAsync(filter)) {
+				while(await cursor.MoveNextAsync()) {
+					var batch = cursor.Current;
+					foreach(var doc in batch) {
+						if(doc["price"].BsonType!=BsonType.Int32) { continue; }
+
+						double p = (double) doc["price"].AsInt32;
+						// double sf = (double) doc["sf"].AsInt32;
+						double latitude =(double) doc["lat"].AsDouble;
+						double longitude =(double) doc["lng"].AsDouble;
+						// double ppsf = p/sf;
+
+						Draw.near(p,5000,800000,latitude,longitude,zoom,bitmap);
+                        //Draw.price(ppsf, latitude, longitude, zoom, bitmap);
+						//Draw.near(ppsf, 50, 250, latitude,longitude,zoom, bitmap);
 						//Draw.near(doc["price"].AsInt32, doc["nearMin"].AsInt32, doc["nearMax"].AsInt32, doc["lat"].AsDouble, doc["lng"].AsDouble, zoom, bitmap);
 					}
 				}
