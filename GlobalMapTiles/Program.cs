@@ -20,9 +20,9 @@ namespace GlobalMapTiles {
 
 	class DrawMap {
 		//string dirType = "sf";
-		string dirType = "pricepersf";
+		//string dirType = "pricepersf";
 		//string dirType = @"HousePricesDownload\web";
-        //string dirType = "land";
+        string dirType = "land";
 		public void initialize() {
 
 			DateTime startTime = DateTime.Now;
