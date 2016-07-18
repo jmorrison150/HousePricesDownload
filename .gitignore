@@ -233,3 +233,5 @@ $RECYCLE.BIN/
 
 web/images/
 web/data/
+
+*.exe
