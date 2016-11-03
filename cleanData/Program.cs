@@ -10,6 +10,86 @@ using MongoDB.Driver;
 namespace cleanData {
 class Program {
 
+
+	static void Main(string[] args) {
+
+		DateTime startTime = DateTime.Now;
+		string now = startTime.ToString("yyyy.MM.dd HH.mm");
+		Console.WriteLine("Started at " + now);
+
+
+		MongoDB.Driver.IMongoClient client = new MongoClient(); // connect to localhost
+		MongoDB.Driver.IMongoDatabase test = client.GetDatabase("prop2");
+		IMongoCollection<BsonDocument> collection = test.GetCollection<BsonDocument>("prop");
+		IMongoCollection<BsonDocument> collection1 = test.GetCollection<BsonDocument>("prop1");
+
+		Task tsk = insert(collection1, collection);
+		//tsk.ConfigureAwait(true);
+		tsk.Wait();
+
+		Task t = createIndex(collection);
+		t.Wait();
+		// await collection.Indexes.CreateOneAsync(Builders<BsonDocument>.IndexKeys.Ascending(doc => doc["quad"]));
+
+		// Task calculateNear = near(collection);
+		// calculateNear.Wait();
+
+
+		DateTime endTime = DateTime.Now;
+		TimeSpan elapsedTime = endTime-startTime;
+		Console.WriteLine("elapsedTime = "+elapsedTime);
+
+		Console.WriteLine("Press Enter to Continue...");
+		Console.ReadKey(false);
+	}
+
+
+
+	public static async Task near(IMongoCollection<BsonDocument> collection) {
+		long count = 0;
+
+		var filterNear = Builders<BsonDocument>.Filter.Exists("nearMin", false);
+		using(var cursor = await collection.FindAsync(filterNear)) {
+			while(await cursor.MoveNextAsync()) {
+				var batch = cursor.Current;
+				foreach(var doc in batch) {
+
+					count++;
+					try {
+						double lat = doc["lat"].AsDouble;
+						double lng = doc["lng"].AsDouble;
+						var builder = Builders<BsonDocument>.Filter;
+						FilterDefinition<BsonDocument> near = builder.Gt("lat", lat-0.01) & builder.Lt("lat", lat+0.01) & builder.Gt("lng", lng-0.01) & builder.Lt("lng", lng+0.01) & builder.Gt("price", 25000);
+
+						if(collection.Find(near).CountAsync().Result==0) { continue; }
+
+						Task<List<BsonDocument>> tskList = collection.Find(near).Limit(1000).ToListAsync();
+						tskList.Wait();
+						List<BsonDocument> list = tskList.Result;
+
+						int minPrice = 40000;
+						minPrice = (int) list.Min(i => i["price"].AsInt32);
+						int maxPrice  = 800000;
+						maxPrice =(int) list.Max(i => i["price"].AsInt32);
+
+						minPrice = Math.Min(minPrice, maxPrice-10);
+						maxPrice = Math.Max(maxPrice, minPrice+20);
+
+						var filter = Builders<BsonDocument>.Filter.Eq("_id", doc["_id"]);
+						var update = Builders<BsonDocument>.Update
+							.Set("nearMin", minPrice)
+							.Set("nearMax", maxPrice);
+						var options = new UpdateOptions { IsUpsert = false };
+						var result = await collection.UpdateOneAsync(filter, update, options);
+
+					} catch {
+						Console.Write(count.ToString()+",");
+					}
+				}
+				Console.WriteLine(count);
+			}
+		}
+	}
 	public static async Task insert(IMongoCollection<BsonDocument> rawData, IMongoCollection<BsonDocument> cleanData) {
 
 		BsonDocument all = new BsonDocument();
@@ -59,136 +139,52 @@ class Program {
 			}
 		}
 	}
-    
-public static async Task near(IMongoCollection<BsonDocument> collection) {
-			long count = 0;
-		
-		var filterNear = Builders<BsonDocument>.Filter.Exists("nearMin",false); 
-		using(var cursor = await collection.FindAsync(filterNear)) {
-				while(await cursor.MoveNextAsync()) {
-					var batch = cursor.Current;
-					foreach(var doc in batch) {
-						
-						count++;
-						try{
-						double lat = doc["lat"].AsDouble;
-						double lng = doc["lng"].AsDouble;
-						var builder = Builders<BsonDocument>.Filter;
-						FilterDefinition<BsonDocument> near = builder.Gt("lat", lat-0.01) & builder.Lt("lat", lat+0.01) & builder.Gt("lng", lng-0.01) & builder.Lt("lng", lng+0.01) & builder.Gt("price", 25000);
-			
-						if(collection.Find(near).CountAsync().Result==0){continue;}
-												
-						Task<List<BsonDocument>> tskList = collection.Find(near).Limit(1000).ToListAsync();
-						tskList.Wait();
-						List<BsonDocument> list = tskList.Result;
-						
-						int minPrice = 40000;
-						minPrice = (int) list.Min(i => i["price"].AsInt32);
-						int maxPrice  = 800000;
-						maxPrice =(int) list.Max(i => i["price"].AsInt32);
-						
-						minPrice = Math.Min(minPrice,maxPrice-10);
-						maxPrice = Math.Max(maxPrice,minPrice+20);
-															
-						var filter = Builders<BsonDocument>.Filter.Eq("_id", doc["_id"]);
-						var update = Builders<BsonDocument>.Update
-							.Set("nearMin",minPrice)
-							.Set("nearMax",maxPrice);
-						var options = new UpdateOptions { IsUpsert = false};
-						var result = await collection.UpdateOneAsync(filter, update, options);
+	static async Task createIndex(IMongoCollection<BsonDocument> collection) {
+		await collection.Indexes.CreateOneAsync(Builders<BsonDocument>.IndexKeys.Ascending(_ => _["quad"]));
+	}
+	public static string latlngToQuadKey(double lat, double lng, int zoom) {
+		int tileSize = 256;
+		//whole world as pixels
+		double sinLatitude = Math.Sin(lat * Math.PI/180.0);
+		int pixelX = (int) ( ( ( lng + 180.0 ) / 360.0 ) * 256.0 * Math.Pow(2.0, zoom) );
+		int pixelY = (int) ( ( 0.5 - Math.Log(( 1.0 + sinLatitude ) / ( 1.0 - sinLatitude )) / ( 4.0 * Math.PI ) ) * 256.0 * Math.Pow(2.0, zoom) );
 
-						}
-						catch{
-							Console.Write(count.ToString()+",");
-						}
-					}
-					Console.WriteLine(count);
-				}
+		//get whole tiles
+		int tileX = (int) ( Math.Ceiling(pixelX / (double) ( tileSize )) - 1 );
+		int tileY = (int) ( Math.Ceiling(pixelY / (double) ( tileSize )) - 1 );
+
+		string quad = tileXYToQuadKey(tileX, tileY, zoom);
+		return quad;
+
+	}
+	private static string tileXYToQuadKey(int tileX, int tileY, int levelOfDetail) {
+		StringBuilder quadKey = new StringBuilder();
+		int[] tile = googleTile(tileX, tileY, levelOfDetail);
+
+		for(int i = tile[2]; i > 0; i--) {
+			char digit = '0';
+			int mask = 1 << ( i - 1 );
+			if(( tile[0] & mask ) != 0) {
+				digit++;
 			}
-}
-		static void Main(string[] args) {
-            
-        DateTime startTime = DateTime.Now;
-        string now = startTime.ToString("yyyy.MM.dd HH.mm");
-        Console.WriteLine("Started at " + now);
-            
-            
-		MongoDB.Driver.IMongoClient client = new MongoClient(); // connect to localhost
-		MongoDB.Driver.IMongoDatabase test = client.GetDatabase("test");
-		IMongoCollection<BsonDocument> collection = test.GetCollection<BsonDocument>("prop");
-		IMongoCollection<BsonDocument> collection1 = test.GetCollection<BsonDocument>("prop1");
-
-		Task tsk = insert(collection1, collection);
-        //tsk.ConfigureAwait(true);
-		tsk.Wait();
-        
-        Task t = createIndex(collection);
-        t.Wait();
-       // await collection.Indexes.CreateOneAsync(Builders<BsonDocument>.IndexKeys.Ascending(doc => doc["quad"]));
-  
-		// Task calculateNear = near(collection);
-		// calculateNear.Wait();
-
-
-        DateTime endTime = DateTime.Now;
-        TimeSpan elapsedTime = endTime-startTime;
-        Console.WriteLine("elapsedTime = "+elapsedTime);
-
-		Console.WriteLine("Press Enter to Continue...");
-		Console.ReadKey(false);
+			if(( tile[1] & mask ) != 0) {
+				digit++;
+				digit++;
+			}
+			quadKey.Append(digit);
 		}
-	
-    
-    
-static async Task createIndex(IMongoCollection<BsonDocument> collection)
-{
-    await collection.Indexes.CreateOneAsync(Builders<BsonDocument>.IndexKeys.Ascending(_ => _["quad"]));
-}
-       
-        
-    public static string latlngToQuadKey(double lat, double lng, int zoom){
-            int tileSize = 256;
-            //whole world as pixels
-            double sinLatitude = Math.Sin(lat * Math.PI/180.0);
-            int pixelX = (int) ( ( ( lng + 180.0 ) / 360.0 ) * 256.0 * Math.Pow(2.0, zoom) );
-            int pixelY = (int) ( ( 0.5 - Math.Log(( 1.0 + sinLatitude ) / ( 1.0 - sinLatitude )) / ( 4.0 * Math.PI ) ) * 256.0 * Math.Pow(2.0, zoom) );
+		return quadKey.ToString();
+	}
+	private static int[] googleTile(int tx, int ty, int zoom) {
+		//"Converts TMS tile coordinates to Google Tile coordinates"
 
-            //get whole tiles
-            int tileX = (int) ( Math.Ceiling(pixelX / (double) ( tileSize )) - 1 );
-            int tileY = (int) ( Math.Ceiling(pixelY / (double) ( tileSize )) - 1 );
-
-            string quad = tileXYToQuadKey(tileX,tileY,zoom);
-            return quad;
-            
-        }
-    private static string tileXYToQuadKey(int tileX, int tileY, int levelOfDetail) {
-            StringBuilder quadKey = new StringBuilder();
-            int[] tile = googleTile(tileX, tileY, levelOfDetail);
-            
-            for(int i = tile[2]; i > 0; i--) {
-                char digit = '0';
-                int mask = 1 << ( i - 1 );
-                if(( tile[0] & mask ) != 0) {
-                    digit++;
-                }
-                if(( tile[1] & mask ) != 0) {
-                    digit++;
-                    digit++;
-                }
-                quadKey.Append(digit);
-            }
-            return quadKey.ToString();
-        }
-    private static int[] googleTile(int tx, int ty, int zoom) {
-            //"Converts TMS tile coordinates to Google Tile coordinates"
-
-            //# coordinate origin is moved from bottom-left to top-left corner of the extent
-            int[] t = new int[3];
-            t[0] = tx;
-            t[1] = (int) ( ( Math.Pow(2, zoom) - 1 ) - ty );
-            t[2] = zoom;
-            return t;
-        }
+		//# coordinate origin is moved from bottom-left to top-left corner of the extent
+		int[] t = new int[3];
+		t[0] = tx;
+		t[1] = (int) ( ( Math.Pow(2, zoom) - 1 ) - ty );
+		t[2] = zoom;
+		return t;
+	}
     
     
     }

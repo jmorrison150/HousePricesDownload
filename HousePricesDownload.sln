@@ -9,6 +9,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GlobalMapTiles", "GlobalMap
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "cleanData", "cleanData\cleanData.csproj", "{58CBC211-98B2-4CC6-94E0-D58D7305A2EA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "analyzeData", "analyzeData\analyzeData.csproj", "{6F9F1E2A-40E9-4742-9F30-B76E4F98506D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D4CF906A-E9E1-4877-9885-6D91EB1A9D46}"
+	ProjectSection(SolutionItems) = preProject
+		compile.bat = compile.bat
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +34,10 @@ Global
 		{58CBC211-98B2-4CC6-94E0-D58D7305A2EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{58CBC211-98B2-4CC6-94E0-D58D7305A2EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{58CBC211-98B2-4CC6-94E0-D58D7305A2EA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6F9F1E2A-40E9-4742-9F30-B76E4F98506D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F9F1E2A-40E9-4742-9F30-B76E4F98506D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F9F1E2A-40E9-4742-9F30-B76E4F98506D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F9F1E2A-40E9-4742-9F30-B76E4F98506D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -233,5 +233,9 @@ $RECYCLE.BIN/
 
 web/images/
 web/data/
+<<<<<<< HEAD
 
 *.exe
+=======
+data/
+>>>>>>> e2ec4b1b9dc32d38bd0c6a9497613b4873abb665
